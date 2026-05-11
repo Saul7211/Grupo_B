@@ -1,0 +1,7 @@
+{
+  "name": "game-engine",
+  "version": "1.0.0",
+  "private": true,
+  "main": "engine-server.js",
+  "type": "module"
+}

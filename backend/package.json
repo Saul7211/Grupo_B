@@ -1,0 +1,7 @@
+{
+  "name": "backend-server",
+  "version": "1.0.0",
+  "private": true,
+  "main": "main-server.js",
+  "type": "module"
+}
