@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Juego 40 - Mesa de Apuestas</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <main class="app">
+
+    <!-- HEADER -->
+    <header class="top-bar">
+
+      <div>
+        <h1>Juego de Cartas 40</h1>
+        <p>Mesa distribuida en tiempo real</p>
+      </div>
+
+      <section class="user-panel">
+        <span class="status-dot"></span>
+        <span>Jugador conectado</span>
+        <strong>$0.00</strong>
+      </section>
+
+    </header>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <section class="game-layout">
+
+      <!-- JUGADOR IZQUIERDO -->
+      <aside class="player-card">
+
+        <div>
+          <h2>Jugador 1</h2>
+          <p>Esperando jugada...</p>
+        </div>
+
+        <div class="score-box">
+          <span>Puntos</span>
+          <strong>0</strong>
+        </div>
+
+      </aside>
+
+      <!-- MESA CENTRAL -->
+      <section class="game-table">
+
+        <!-- CARTAS DEL OPONENTE -->
+        <div class="opponent-area">
+
+          <h3>Oponente</h3>
+
+          <div class="card-row">
+            <div class="card back"></div>
+            <div class="card back"></div>
+            <div class="card back"></div>
+          </div>
+
+        </div>
+
+        <!-- CENTRO -->
+        <div class="center-board">
+
+          <!-- MAZO -->
+          <div class="deck-zone">
+
+            <div class="card deck"></div>
+
+            <span>Mazo</span>
+
+          </div>
+
+          <!-- POZO -->
+          <div class="pot-box">
+
+            <span>Pozo acumulado</span>
+
+            <strong>$0.00</strong>
+
+          </div>
+
+          <!-- CARTAS EN MESA -->
+          <div class="table-cards">
+
+            <div class="card">
+              7
+              <span>♦</span>
+            </div>
+
+            <div class="card">
+              3
+              <span>♣</span>
+            </div>
+
+            <div class="card empty">
+              +
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- TUS CARTAS -->
+        <div class="player-area">
+
+          <h3>Tus cartas</h3>
+
+          <div class="card-row">
+
+            <button class="card">
+              A
+              <span>♠</span>
+            </button>
+
+            <button class="card">
+              5
+              <span>♥</span>
+            </button>
+
+            <button class="card">
+              Q
+              <span>♦</span>
+            </button>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      <!-- JUGADOR DERECHO -->
+      <aside class="player-card">
+
+        <div>
+          <h2>Jugador 2</h2>
+          <p>Turno actual</p>
+        </div>
+
+        <div class="score-box active">
+          <span>Puntos</span>
+          <strong>0</strong>
+        </div>
+
+      </aside>
+
+    </section>
+
+    <!-- BOTONES -->
+    <footer class="action-panel">
+
+      <button class="primary-btn">
+        Jugar carta
+      </button>
+
+      <button class="secondary-btn">
+        Pasar turno
+      </button>
+
+      <button class="danger-btn">
+        Salir de sala
+      </button>
+
+    </footer>
+
+  </main>
+
+</body>
+</html>

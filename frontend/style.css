@@ -1,1 +1,432 @@
-/*  Estilos*/
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* BODY */
+
+body {
+  min-height: 100vh;
+  font-family: Arial, Helvetica, sans-serif;
+
+  background:
+    radial-gradient(circle at top,
+      #182944 0%,
+      #101722 40%,
+      #080b10 100%);
+
+  color: #f5f7fb;
+}
+
+/* CONTENEDOR */
+
+.app {
+  width: min(1200px, 95%);
+  margin: auto;
+  padding: 24px 0;
+}
+
+/* HEADER */
+
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  background: rgba(20, 28, 42, 0.9);
+
+  border: 1px solid #24344d;
+
+  border-radius: 18px;
+
+  padding: 18px 24px;
+
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.35);
+}
+
+.top-bar h1 {
+  font-size: 28px;
+}
+
+.top-bar p {
+  margin-top: 4px;
+  color: #9fb1c9;
+}
+
+/* PANEL USUARIO */
+
+.user-panel {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  background: #101826;
+
+  padding: 12px 16px;
+
+  border-radius: 14px;
+
+  border: 1px solid #2f4564;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+
+  background: #38d878;
+
+  border-radius: 50%;
+
+  box-shadow:
+    0 0 10px #38d878;
+}
+
+/* LAYOUT */
+
+.game-layout {
+  display: grid;
+
+  grid-template-columns:
+    220px
+    1fr
+    220px;
+
+  gap: 18px;
+
+  margin-top: 24px;
+}
+
+/* TARJETAS JUGADORES */
+
+.player-card {
+  background:
+    rgba(13, 19, 30, 0.95);
+
+  border: 1px solid #273a56;
+
+  border-radius: 20px;
+
+  padding: 20px;
+
+  min-height: 430px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.player-card h2 {
+  color: #dce9ff;
+}
+
+.player-card p {
+  color: #9fb1c9;
+  margin-top: 8px;
+}
+
+/* SCORE */
+
+.score-box {
+  background: #111a28;
+
+  border: 1px solid #304866;
+
+  border-radius: 16px;
+
+  padding: 16px;
+
+  text-align: center;
+}
+
+.score-box span {
+  display: block;
+  color: #8da3bf;
+  margin-bottom: 6px;
+}
+
+.score-box strong {
+  font-size: 34px;
+}
+
+.score-box.active {
+  border-color: #5ea2ff;
+
+  box-shadow:
+    0 0 18px rgba(94, 162, 255, 0.35);
+}
+
+/* MESA */
+
+.game-table {
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(19, 54, 65, 0.95),
+      rgba(9, 29, 40, 0.95)
+    );
+
+  border: 2px solid #315268;
+
+  border-radius: 34px;
+
+  padding: 26px;
+
+  min-height: 560px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  box-shadow:
+    inset 0 0 40px rgba(0, 0, 0, 0.45),
+    0 18px 45px rgba(0, 0, 0, 0.45);
+}
+
+/* AREAS */
+
+.opponent-area,
+.player-area {
+  text-align: center;
+}
+
+.opponent-area h3,
+.player-area h3 {
+  margin-bottom: 12px;
+}
+
+/* FILAS */
+
+.card-row {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+}
+
+/* CENTRO */
+
+.center-board {
+
+  display: grid;
+
+  grid-template-columns:
+    140px
+    1fr
+    220px;
+
+  gap: 22px;
+
+  align-items: center;
+}
+
+/* CAJAS */
+
+.deck-zone,
+.pot-box,
+.table-cards {
+
+  background:
+    rgba(8, 13, 20, 0.45);
+
+  border:
+    1px solid rgba(142, 176, 214, 0.25);
+
+  border-radius: 20px;
+
+  padding: 18px;
+
+  text-align: center;
+}
+
+.deck-zone span,
+.pot-box span {
+  display: block;
+  margin-top: 10px;
+  color: #9fb1c9;
+}
+
+/* POZO */
+
+.pot-box strong {
+  display: block;
+
+  font-size: 32px;
+
+  margin-top: 8px;
+
+  color: #ffd166;
+}
+
+/* CARTAS MESA */
+
+.table-cards {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* CARTAS */
+
+.card {
+
+  width: 74px;
+  height: 104px;
+
+  border-radius: 12px;
+
+  background: #f7f8fb;
+
+  color: #111827;
+
+  border: 2px solid #dbe3ef;
+
+  font-size: 28px;
+  font-weight: bold;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  box-shadow:
+    0 10px 18px rgba(0, 0, 0, 0.35);
+}
+
+/* BOTONES CARTAS */
+
+button.card {
+  cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+button.card:hover {
+
+  transform: translateY(-10px);
+
+  box-shadow:
+    0 18px 24px rgba(0, 0, 0, 0.45);
+}
+
+.card span {
+  font-size: 24px;
+  color: #d62828;
+}
+
+/* CARTAS REVERSO */
+
+.card.back,
+.card.deck {
+
+  background:
+    repeating-linear-gradient(
+      45deg,
+      #15263d,
+      #15263d 8px,
+      #1e3a5f 8px,
+      #1e3a5f 16px
+    );
+
+  border-color: #5ea2ff;
+}
+
+/* ESPACIO VACIO */
+
+.card.empty {
+
+  background: transparent;
+
+  color: #9fb1c9;
+
+  border: 2px dashed #6c7f99;
+
+  box-shadow: none;
+}
+
+/* PANEL BOTONES */
+
+.action-panel {
+
+  margin-top: 22px;
+
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+
+  background:
+    rgba(20, 28, 42, 0.85);
+
+  border: 1px solid #24344d;
+
+  border-radius: 18px;
+
+  padding: 18px;
+}
+
+/* BOTONES */
+
+.action-panel button {
+
+  border: none;
+
+  padding: 13px 22px;
+
+  border-radius: 12px;
+
+  font-weight: bold;
+
+  color: white;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.action-panel button:hover {
+  transform: translateY(-2px);
+  opacity: 0.9;
+}
+
+/* TIPOS BOTONES */
+
+.primary-btn {
+  background: #2563eb;
+}
+
+.secondary-btn {
+  background: #334155;
+}
+
+.danger-btn {
+  background: #dc2626;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 900px) {
+
+  .top-bar,
+  .action-panel {
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .game-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .player-card {
+    min-height: auto;
+  }
+
+  .center-board {
+    grid-template-columns: 1fr;
+  }
+
+}
