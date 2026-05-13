@@ -1,6 +1,6 @@
 # Game Engine (Cuarenta)
 
-Este modulo implementa el flujo del Cuarenta ecuatoriano usando TCP y mensajes NDJSON. Incluye mazo de 40 cartas, capturas (igual, suma, escalera), turnos, puntaje y veredicto final.
+Este modulo implementa el flujo del Cuarenta ecuatoriano y se comunica con el backend por TCP usando JSON. Incluye mazo de 40 cartas, capturas (igual, suma, escalera), turnos, puntaje y veredicto final.
 
 ## Como correr
 
@@ -12,34 +12,29 @@ node engine-server.js
 
 Variables opcionales:
 
-- `TCP_PORT` (default: 9000)
-- `MAX_PLAYERS` (default: 4)
+- `TCP_PORT` (default: 5000)
 - `HAND_SIZE` (default: 5)
 - `POINTS_TO_WIN` (default: 40)
 
-## Protocolo (NDJSON)
+## Protocolo (TCP JSON)
 
-Cada linea es un objeto JSON.
+El backend abre una conexion TCP, envia un JSON y recibe una respuesta JSON. El servidor acepta JSON unico o NDJSON.
 
-### Mensajes de cliente a servidor
+### Mensajes de backend a motor
 
-- `{"type":"hello","name":"Ana"}` asigna nombre.
-- `{"type":"start"}` inicia partida si hay 2+ jugadores.
-- `{"type":"bet","amount":10}` apuesta (opcional, no afecta puntaje de Cuarenta).
-- `{"type":"play","card":{"id":"..."},"capture":["id1","id2"]}` juega carta y captura.
-- `{"type":"play","card":{"suit":"oros","rank":"7"}}` juega carta sin captura.
-- `{"type":"state"}` pide estado actual.
-- `{"type":"ping"}` prueba de conexion.
+- `{"action":"START_GAME","sessionId":"...","players":["u1","u2"],"totalPot":20}` crea sesion y reparte.
+- `{"action":"PLAY_CARD","sessionId":"...","playerId":"u1","card":{"id":"..."},"capture":["id1","id2"]}` juega carta y captura.
+- `{"action":"PLAY_CARD","sessionId":"...","playerId":"u1","card":{"suit":"corazones ♥️","rank":"7"}}` juega sin captura.
+- `{"action":"GET_STATE","sessionId":"...","playerId":"u1"}` devuelve estado y mano.
+- `{"action":"END_GAME","sessionId":"..."}` finaliza la sesion.
 
-### Mensajes de servidor a cliente
+### Respuestas del motor
 
-- `{"type":"welcome","id":"..."}` id del jugador.
-- `{"type":"players","players":[...]}` lista de jugadores.
-- `{"type":"started"}` partida iniciada.
-- `{"type":"state",...}` estado por jugador (incluye su mano y equipo).
-- `{"type":"bet", "pot": 20, "bets": {"id": 20}}` apuestas.
-- `{"type":"final", "verdict": {...}}` veredicto de ronda.
-- `{"type":"error", "message":"..."}` error.
+- `{"action":"GAME_STARTED","sessionId":"...","state":{...},"hands":{...}}`
+- `{"action":"STATE_UPDATE","sessionId":"...","state":{...},"hands":{...}}`
+- `{"action":"FINAL","sessionId":"...","state":{...},"verdict":{...}}`
+- `{"action":"STATE","sessionId":"...","state":{...},"hand":[...]}`
+- `{"action":"ERROR","message":"..."}`
 
 ## Reglas configuradas
 
@@ -74,11 +69,11 @@ Cada linea es un objeto JSON.
 
 ### engine-server.js
 
-- Servidor TCP que recibe NDJSON.
-- Mantiene estado de partida, equipos, turnos y mesa.
+- Servidor TCP que recibe acciones del backend por `sessionId`.
+- Mantiene estado de partida, equipos, turnos y mesa por sesion.
 - Valida capturas por igual, suma o escalera.
 - Calcula puntos por ronda, caida, limpia, falla y carton.
-- Publica veredicto final cuando se termina el mazo o alguien llega a 40.
+- Devuelve `verdict` con `winnerId` y `winnerIds` al finalizar.
 
 ## Notas
 
