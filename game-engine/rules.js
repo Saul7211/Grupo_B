@@ -1,11 +1,25 @@
-export const SUITS = ["oros", "copas", "espadas", "bastos"];
-export const RANKS = [1, 2, 3, 4, 5, 6, 7, 10, 11, 12];
+export const SUITS = ["corazones ♥️", "diamantes ♦️", "treboles ♣️", "picas ♠️"];
+export const RANKS = ["A", "2", "3", "4", "5", "6", "7", "J", "Q", "K"];
+export const RANK_VALUE = {
+	A: 1,
+	2: 2,
+	3: 3,
+	4: 4,
+	5: 5,
+	6: 6,
+	7: 7,
+	J: 8,
+	Q: 9,
+	K: 10,
+};
 
 export function createDeck() {
 	const deck = [];
+	let counter = 0;
 	for (const suit of SUITS) {
 		for (const rank of RANKS) {
-			deck.push({ suit, rank });
+			deck.push({ id: `${suit}-${rank}-${counter}`, suit, rank });
+			counter += 1;
 		}
 	}
 	return deck;
@@ -25,25 +39,10 @@ export function deal(deck, count) {
 	return deck.splice(0, count);
 }
 
-export function cardValue(card) {
-	if (!card || typeof card.rank !== "number") {
-		return 0;
-	}
-	return card.rank;
+export function rankValue(rank) {
+	return RANK_VALUE[rank] ?? 0;
 }
 
-export function compareCards(cardA, cardB) {
-	const valueA = cardValue(cardA);
-	const valueB = cardValue(cardB);
-	if (valueA > valueB) return 1;
-	if (valueA < valueB) return -1;
-	const suitA = SUITS.indexOf(cardA?.suit);
-	const suitB = SUITS.indexOf(cardB?.suit);
-	if (suitA > suitB) return 1;
-	if (suitA < suitB) return -1;
-	return 0;
-}
-
-export function evaluateHand(hand) {
-	return hand.reduce((total, card) => total + cardValue(card), 0);
+export function rankIndex(rank) {
+	return RANKS.indexOf(rank);
 }
