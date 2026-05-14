@@ -1,170 +1,182 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Juego 40 - Mesa de Apuestas</title>
-  <link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Juego 40 - Mesa de Apuestas</title>
+    <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
 
-  <main class="app">
+    <main class="app">
 
-    <!-- HEADER -->
-    <header class="top-bar">
-
-      <div>
-        <h1>Juego de Cartas 40</h1>
-        <p>Mesa distribuida en tiempo real</p>
-      </div>
-
-      <section class="user-panel">
-        <span class="status-dot"></span>
-        <span>Jugador conectado</span>
-        <strong>$0.00</strong>
-      </section>
-
-    </header>
-
-    <!-- CONTENIDO PRINCIPAL -->
-    <section class="game-layout">
-
-      <!-- JUGADOR IZQUIERDO -->
-      <aside class="player-card">
-
-        <div>
-          <h2>Jugador 1</h2>
-          <p>Esperando jugada...</p>
-        </div>
-
-        <div class="score-box">
-          <span>Puntos</span>
-          <strong>0</strong>
-        </div>
-
-      </aside>
-
-      <!-- MESA CENTRAL -->
-      <section class="game-table">
-
-        <!-- CARTAS DEL OPONENTE -->
-        <div class="opponent-area">
-
-          <h3>Oponente</h3>
-
-          <div class="card-row">
-            <div class="card back"></div>
-            <div class="card back"></div>
-            <div class="card back"></div>
-          </div>
-
-        </div>
-
-        <!-- CENTRO -->
-        <div class="center-board">
-
-          <!-- MAZO -->
-          <div class="deck-zone">
-
-            <div class="card deck"></div>
-
-            <span>Mazo</span>
-
-          </div>
-
-          <!-- POZO -->
-          <div class="pot-box">
-
-            <span>Pozo acumulado</span>
-
-            <strong>$0.00</strong>
-
-          </div>
-
-          <!-- CARTAS EN MESA -->
-          <div class="table-cards">
-
-            <div class="card">
-              7
-              <span>♦</span>
+        <header class="top-bar">
+            <div>
+                <h1>Juego de Cartas 40</h1>
+                <p>Mesa distribuida en tiempo real - Modalidad 4 jugadores</p>
             </div>
 
-            <div class="card">
-              3
-              <span>♣</span>
-            </div>
+            <section class="user-panel">
+                <span class="status-dot"></span>
+                <span id="statusText">Conectando...</span>
+                <strong id="balanceText">$0.00</strong>
+            </section>
+        </header>
 
-            <div class="card empty">
-              +
-            </div>
+        <section class="game-layout">
 
-          </div>
+            <aside class="player-card">
+                <div>
+                    <h2 id="player2Name">Jugador 2</h2>
+                    <p>Equipo B</p>
+                </div>
 
-        </div>
+                <div class="vertical-cards" id="player2Cards">
+                    <div class="card back"></div>
+                    <div class="card back"></div>
+                    <div class="card back"></div>
+                    <div class="card back"></div>
+                    <div class="card back"></div>
+                </div>
 
-        <!-- TUS CARTAS -->
-        <div class="player-area">
+                <div class="score-box">
+                    <span>Cartas</span>
+                    <strong id="player2CardCount">5</strong>
+                </div>
+            </aside>
 
-          <h3>Tus cartas</h3>
+            <section class="game-table">
 
-          <div class="card-row">
+                <div class="opponent-area">
+                    <h3 id="player3Name">Jugador 3 - Compañero</h3>
+                    <p>Equipo A</p>
 
-            <button class="card">
-              A
-              <span>♠</span>
+                    <div class="card-row" id="player3Cards">
+                        <div class="card back"></div>
+                        <div class="card back"></div>
+                        <div class="card back"></div>
+                        <div class="card back"></div>
+                        <div class="card back"></div>
+                    </div>
+                </div>
+
+                <div class="center-board">
+
+                    <div class="deck-zone">
+                        <div class="card deck"></div>
+                        <span>Mazo</span>
+                        <span>Cartas restantes: <strong id="deckCount">20</strong></span>
+                    </div>
+
+                    <div class="pot-box">
+                        <span>Pozo acumulado</span>
+                        <strong id="potText">$0.00</strong>
+
+                        <br>
+
+                        <span>Equipo A: <strong id="teamAScore">0</strong> puntos</span>
+                        <span>Equipo B: <strong id="teamBScore">0</strong> puntos</span>
+
+                        <br>
+
+                        <span>Turno actual</span>
+                        <strong id="turnText">Jugador 1</strong>
+                    </div>
+
+                    <div class="table-cards" id="tableCards">
+                        <div class="card">
+                            A
+                            <span>♠</span>
+                        </div>
+
+                        <div class="card empty">
+                            +
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="player-area">
+                    <h3 id="player1Name">Jugador 1 - Tus cartas</h3>
+                    <p>Equipo A</p>
+
+                    <div class="card-row" id="player1Cards">
+                        <button class="card" data-card="A-spade">
+                            A
+                            <span>♠</span>
+                        </button>
+
+                        <button class="card" data-card="5-heart">
+                            5
+                            <span>♥</span>
+                        </button>
+
+                        <button class="card" data-card="Q-diamond">
+                            Q
+                            <span>♦</span>
+                        </button>
+
+                        <button class="card" data-card="2-diamond">
+                            2
+                            <span>♦</span>
+                        </button>
+
+                        <button class="card" data-card="6-heart">
+                            6
+                            <span>♥</span>
+                        </button>
+                    </div>
+                </div>
+
+            </section>
+
+            <aside class="player-card">
+                <div>
+                    <h2 id="player4Name">Jugador 4</h2>
+                    <p>Equipo B</p>
+                </div>
+
+                <div class="vertical-cards" id="player4Cards">
+                    <div class="card back"></div>
+                    <div class="card back"></div>
+                    <div class="card back"></div>
+                    <div class="card back"></div>
+                    <div class="card back"></div>
+                </div>
+
+                <div class="score-box active">
+                    <span>Cartas</span>
+                    <strong id="player4CardCount">5</strong>
+                </div>
+            </aside>
+
+        </section>
+
+        <footer class="action-panel">
+            <button class="primary-btn" id="playCardBtn">
+                Jugar carta
             </button>
 
-            <button class="card">
-              5
-              <span>♥</span>
+            <button class="secondary-btn" id="declareRoundBtn">
+                Declarar ronda
             </button>
 
-            <button class="card">
-              Q
-              <span>♦</span>
+            <button class="secondary-btn" id="passTurnBtn">
+                Pasar turno
             </button>
 
-          </div>
+            <button class="danger-btn" id="leaveRoomBtn">
+                Salir de sala
+            </button>
+        </footer>
 
-        </div>
+    </main>
 
-      </section>
-
-      <!-- JUGADOR DERECHO -->
-      <aside class="player-card">
-
-        <div>
-          <h2>Jugador 2</h2>
-          <p>Turno actual</p>
-        </div>
-
-        <div class="score-box active">
-          <span>Puntos</span>
-          <strong>0</strong>
-        </div>
-
-      </aside>
-
-    </section>
-
-    <!-- BOTONES -->
-    <footer class="action-panel">
-
-      <button class="primary-btn">
-        Jugar carta
-      </button>
-
-      <button class="secondary-btn">
-        Pasar turno
-      </button>
-
-      <button class="danger-btn">
-        Salir de sala
-      </button>
-
-    </footer>
-
-  </main>
+    <script src="http://localhost:3000/socket.io/socket.io.js"></script>
+    <script src="socket-client.js"></script>
 
 </body>
+
 </html>
