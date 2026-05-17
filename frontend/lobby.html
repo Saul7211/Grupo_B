@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Lobby - Juego 40</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <button id="logoutBtn" class="danger-btn" style="position:absolute;top:18px;right:18px;z-index:10;">Cerrar sesión</button>
+  <main class="app">
+
+    <header class="top-bar">
+      <div>
+        <h1>Juego de Cartas 40</h1>
+        <p>Panel principal</p>
+      </div>
+
+      <section class="user-panel">
+        <span class="status-dot"></span>
+        <span id="usernameText">Jugador</span>
+        <strong id="balanceText">$0.00</strong>
+      </section>
+    </header>
+
+    <section class="lobby-view">
+      <div class="lobby-card">
+
+        <h2>Opciones de partida</h2>
+
+        <div class="lobby-actions">
+          <input id="rechargeInput" type="number" placeholder="Monto a recargar">
+          <button id="rechargeBtn" class="secondary-btn">Recargar saldo</button>
+        </div>
+
+        <hr>
+
+        <h3>Crear sala</h3>
+        <div class="lobby-actions">
+          <input id="betInput" type="number" placeholder="Monto de apuesta">
+          <button id="createRoomBtn" class="primary-btn">Crear sala</button>
+        </div>
+
+        <div id="createdRoomBox" class="room-code-box hidden">
+          <span>Código de sala generado:</span>
+          <strong id="createdRoomCode"></strong>
+          <p>Comparte este código con otro jugador para que se una.</p>
+        </div>
+
+        <hr>
+
+        <h3>Unirse a sala</h3>
+        <div class="lobby-actions">
+          <input id="joinCodeInput" type="text" placeholder="Código de sala">
+          <button id="joinRoomBtn" class="primary-btn">Unirse</button>
+        </div>
+
+        <hr>
+
+        <h3>Salas disponibles</h3>
+        <div id="roomsList" class="rooms-list">
+          <p class="empty-message">No hay salas disponibles.</p>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <script src="http://localhost:3000/socket.io/socket.io.js"></script>
+  <script src="socket-client.js"></script>
+
+</body>
+</html>

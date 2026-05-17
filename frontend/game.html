@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Juego 40 - Partida</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+    <button id="logoutBtn" class="danger-btn" style="position:absolute;top:18px;right:18px;z-index:10;">Cerrar sesión</button>
+    <main class="app">
+
+        <header class="top-bar">
+            <div>
+                <h1>Juego de Cartas 40</h1>
+                <p id="statusText">Esperando cartas del motor...</p>
+            </div>
+
+            <section class="user-panel">
+                <span class="status-dot"></span>
+                <span id="usernameText">Jugador</span>
+                <strong id="balanceText">$0.00</strong>
+            </section>
+        </header>
+
+        <section class="game-layout">
+
+            <aside class="player-card">
+                <div>
+                    <h2 id="player2Name">Jugador 2</h2>
+                    <p>Equipo B</p>
+                </div>
+
+                <div class="vertical-cards" id="player2Cards"></div>
+
+                <div class="score-box">
+                    <span>Cartas</span>
+                    <strong id="player2CardCount">0</strong>
+                </div>
+            </aside>
+
+            <section class="game-table">
+
+                <div class="opponent-area">
+                    <h3 id="player3Name">Jugador 3 - Compañero</h3>
+                    <p>Equipo A</p>
+
+                    <div class="card-row" id="player3Cards"></div>
+
+                    <div class="score-box">
+                        <span>Cartas</span>
+                        <strong id="player3CardCount">0</strong>
+                    </div>
+                </div>
+
+                <div class="center-board">
+
+                    <div class="deck-zone">
+                        <div class="card deck"></div>
+                        <span>Mazo</span>
+                        <span>Cartas restantes: <strong id="deckCount">0</strong></span>
+                    </div>
+
+                    <div class="pot-box">
+                        <span>Pozo acumulado</span>
+                        <strong id="potText">$0.00</strong>
+
+                        <br>
+
+                        <span>Equipo A: <strong id="teamAScore">0</strong> puntos</span>
+                        <span>Equipo B: <strong id="teamBScore">0</strong> puntos</span>
+
+                        <br>
+
+                        <span>Turno actual</span>
+                        <strong id="turnText">Esperando...</strong>
+                    </div>
+
+                    <div class="table-cards" id="tableCards">
+                        <div class="card empty">+</div>
+                    </div>
+
+                </div>
+
+                <div class="player-area">
+                    <h3 id="player1Name">Tus cartas</h3>
+                    <p>Selecciona una carta y, si deseas capturar, selecciona cartas de la mesa.</p>
+
+                    <div class="card-row" id="player1Cards">
+                        <div class="card empty">...</div>
+                    </div>
+                </div>
+
+            </section>
+
+            <aside class="player-card">
+                <div>
+                    <h2 id="player4Name">Jugador 4</h2>
+                    <p>Equipo B</p>
+                </div>
+
+                <div class="vertical-cards" id="player4Cards"></div>
+
+                <div class="score-box active">
+                    <span>Cartas</span>
+                    <strong id="player4CardCount">0</strong>
+                </div>
+            </aside>
+
+        </section>
+
+        <footer class="action-panel">
+            <button class="primary-btn" id="playCardBtn">Jugar carta</button>
+            <button class="secondary-btn" id="clearSelectionBtn">Limpiar selección</button>
+            <button class="danger-btn" id="leaveRoomBtn">Salir de sala</button>
+        </footer>
+
+    </main>
+
+    <script src="http://localhost:3000/socket.io/socket.io.js"></script>
+    <script src="socket-client.js"></script>
+
+</body>
+
+</html>

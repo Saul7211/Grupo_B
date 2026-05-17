@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Login - Juego 40</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <main class="app">
+    <section class="auth-view">
+      <div class="auth-card">
+        <h2>Iniciar sesión</h2>
+
+        <input id="loginUsername" type="text" placeholder="Usuario">
+        <input id="loginPassword" type="password" placeholder="Contraseña">
+
+        <button id="loginBtn" class="primary-btn">Ingresar</button>
+
+        <p>
+          ¿No tienes cuenta?
+          <a href="register.html">Registrarse</a>
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <script src="http://localhost:3000/socket.io/socket.io.js"></script>
+  <script src="socket-client.js"></script>
+
+</body>
+</html>

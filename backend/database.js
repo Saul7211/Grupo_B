@@ -172,30 +172,47 @@ export async function aceptarPartida(userId, sessionId) {
         if (session.length === 0) throw new Error('Partida no encontrada o ya iniciada.');
         if (session[0].creator_id_fk === userId) throw new Error('No puedes unirte a tu propia partida.');
 
+        // 2. Contar cuántos jugadores ya están en la sala (apuestas registradas)
+        const [apuestas] = await connection.execute(
+            'SELECT COUNT(DISTINCT user_id_fk) as numJugadores FROM transactions WHERE game_session_id_fk = ? AND type = "bet"',
+            [sessionId]
+        );
+        const numJugadores = apuestas[0].numJugadores;
+        if (numJugadores >= 4) throw new Error('La sala ya está llena.');
+
+        // 3. Validar saldo y descontarlo al jugador
         const monto = session[0].total_pot;
         const creadorId = session[0].creator_id_fk;
-
-        // 2. Validar saldo y descontarlo al segundo jugador
         const [res] = await connection.execute(
             'UPDATE users SET balance = balance - ? WHERE id = ? AND balance >= ?',
             [monto, userId, monto]
         );
         if (res.affectedRows === 0) throw new Error('Saldo insuficiente.');
 
-        // 3. Sumar al pozo y pasar la sesión a 'active'
+        // 4. Sumar al pozo (no cambiar status aún)
         await connection.execute(
-            'UPDATE game_sessions SET total_pot = total_pot + ?, status = "active" WHERE id = ?',
+            'UPDATE game_sessions SET total_pot = total_pot + ? WHERE id = ?',
             [monto, sessionId]
         );
 
-        // 4. Registrar la transacción del segundo jugador
+        // 5. Registrar la transacción de apuesta
         await connection.execute(
             'INSERT INTO transactions (id, user_id_fk, game_session_id_fk, amount, type) VALUES (UUID(), ?, ?, ?, "bet")',
             [userId, sessionId, monto]
         );
 
+        // 6. Si es el cuarto jugador, cambiar status a 'active'
+        let salaLlena = false;
+        if (numJugadores + 1 === 4) {
+            await connection.execute(
+                'UPDATE game_sessions SET status = "active" WHERE id = ?',
+                [sessionId]
+            );
+            salaLlena = true;
+        }
+
         await connection.commit();
-        return { success: true, montoTotal: monto * 2, creadorId };
+        return { success: true, montoTotal: monto * (numJugadores + 1), creadorId, salaLlena };
     } catch (error) {
         await connection.rollback();
         throw error;

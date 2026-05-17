@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Registro - Juego 40</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <main class="app">
+    <section class="auth-view">
+      <div class="auth-card">
+        <h2>Registrar usuario</h2>
+
+        <input id="registerUsername" type="text" placeholder="Usuario">
+        <input id="registerPassword" type="password" placeholder="Contraseña">
+
+        <button id="registerBtn" class="primary-btn">Crear cuenta</button>
+
+        <p>
+          ¿Ya tienes cuenta?
+          <a href="login.html">Iniciar sesión</a>
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <script src="http://localhost:3000/socket.io/socket.io.js"></script>
+  <script src="socket-client.js"></script>
+
+</body>
+</html>
