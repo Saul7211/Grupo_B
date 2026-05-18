@@ -149,7 +149,7 @@ io.on('connection', (socket) => {
             // Si el usuario tenía una partida activa, actualizar su socket
             if (sessionId && jugadoresEnPartida.has(userId)) {
                 const playerInfo = jugadoresEnPartida.get(userId);
-                
+
                 if (playerInfo.timeoutId) {
                     clearTimeout(playerInfo.timeoutId);
                     console.log(`[RECONEXIÓN-LOGIN] Usuario ${userId} se reconectó en sesión ${sessionId}`);
@@ -360,7 +360,18 @@ io.on('connection', (socket) => {
         }
     });
 
+    // MONITOREO UDP DE LATENCIA
 
+    socket.on('udp_ping_jugador', ({ userId, username, sessionId }) => {
+        if (!userId || !sessionId) return;
+
+        sendUdpPing({
+            socketId: socket.id,
+            userId,
+            username,
+            sessionId
+        });
+    });
 
     socket.on('disconnect', () => {
         console.log('Cliente desconectado:', socket.id);
@@ -376,7 +387,7 @@ io.on('connection', (socket) => {
         console.log(`[DESCONEXIÓN] Usuario ${desconectadoUserId} desconectado de sesión ${sessionId}`);
 
         const salaExiste = salasPendientes.has(sessionId);
-        
+
         if (salaExiste) {
             jugadoresEnPartida.delete(desconectadoUserId);
             return;
