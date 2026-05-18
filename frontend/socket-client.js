@@ -678,9 +678,10 @@ function renderGameState(event) {
     }
   }
   
-  // ACTUALIZAR PERROS (cartas capturadas)
+  // ACTUALIZAR PERROS (caídas válidas)
+  // Los perros SOLO se incrementan cuando alguien hace una caída válida
   if (teamAPerros) {
-    const currentPerros = state.teamCapturedCount?.A ?? 0;
+    const currentPerros = state.teamCaidaCount?.A ?? 0;
     teamAPerros.textContent = currentPerros;
     
     // Animar si cambió
@@ -692,7 +693,7 @@ function renderGameState(event) {
   }
   
   if (teamBPerros) {
-    const currentPerros = state.teamCapturedCount?.B ?? 0;
+    const currentPerros = state.teamCaidaCount?.B ?? 0;
     teamBPerros.textContent = currentPerros;
     
     // Animar si cambió
@@ -1046,15 +1047,12 @@ function renderCarton(teamCapturedCards) {
     });
   }
 
-  // Calcular suma de cartas por equipo
-  const sumaA = calculateCardSum(cardsA);
-  const sumaB = calculateCardSum(cardsB);
-
+  // Mostrar CANTIDAD de cartas por equipo (no suma)
   if (cartonASuma) {
-    cartonASuma.textContent = `Suma: ${sumaA}`;
+    cartonASuma.textContent = `Cartas: ${cardsA.length}`;
   }
   if (cartonBSuma) {
-    cartonBSuma.textContent = `Suma: ${sumaB}`;
+    cartonBSuma.textContent = `Cartas: ${cardsB.length}`;
   }
 }
 

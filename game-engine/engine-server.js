@@ -71,6 +71,7 @@ function getState(session) {
 		table: session.table,
 		teamScores: session.teamScores,
 		teamCapturedCount: session.teamCapturedCount,
+		teamCaidaCount: session.teamCaidaCount,
 		teamCapturedCards: teamCapturedCards,
 		pot: session.betting.pot,
 	};
@@ -124,6 +125,8 @@ function resetRoundState(session) {
 	session.deck = shuffle(createDeck());
 	session.table = [];
 	session.lastPlay = null;
+	session.lastPlayedCard = null;
+	session.lastPlayerId = null;
 	session.teamCapturedCount = { A: 0, B: 0 };
 	session.events = [];
 	resetBets(session.betting);
@@ -177,8 +180,11 @@ function createSession({ sessionId, players, totalPot }) {
 		turnIndex: 0,
 		dealerIndex: 0,
 		lastPlay: null,
+		lastPlayedCard: null,
+		lastPlayerId: null,
 		teamScores: { A: 0, B: 0 },
 		teamCapturedCount: { A: 0, B: 0 },
+		teamCaidaCount: { A: 0, B: 0 },
 		events: [],
 		betting: createBettingState({ minBet: 1, maxBet: 100 }),
 		finalVerdict: null,
@@ -463,18 +469,11 @@ function applyCapture(session, player, playedCard, selectedCards) {
 	}
 
 	// Calcular puntos según el tipo de captura
-	if (caida && limpia) {
-		// CAÍDA + LIMPIA: Captura por igualdad + mesa queda vacía
-		verdict = awardPoints(session, player.team, RULES.caidaYLimpiaPoints, "caida_y_limpia");
-	} else {
-		if (caida) {
-			// CAÍDA (sin limpia): Solo captura por igualdad
-			verdict = awardPoints(session, player.team, RULES.caidaPoints, "caida");
-		}
-		if (limpia) {
-			// LIMPIA (sin caída): Puede ser captura por suma o igualdad, pero mesa queda vacía
-			verdict = awardPoints(session, player.team, RULES.limpiaPoints, "limpia");
-		}
+	// NOTA: La caída ahora SOLO se valida si el SIGUIENTE jugador juega la misma carta
+	// Ver handlePlay para la lógica de caída.
+	if (limpia) {
+		// LIMPIA (sin caída): Puede ser captura por suma o igualdad, pero mesa queda vacía
+		verdict = awardPoints(session, player.team, RULES.limpiaPoints, "limpia");
 	}
 
 	return { caida, limpia, verdict };
@@ -609,13 +608,43 @@ function handlePlay(session, playerId, payload) {
 
 	const validation = validateCaptureSelection(session, played, selectedCards);
 	let verdict = null;
+	let caidaDetected = false;
+	
 	if (validation.type === "none") {
 		session.table.push(played);
 		session.lastPlay = { playerId, cardId: played.id, rank: played.rank };
+		session.lastPlayedCard = played.rank;
+		session.lastPlayerId = playerId;
 	} else {
+		// VERIFICAR CAÍDA: El jugador anterior jugó la misma carta
+		// Una caída es válida SOLO si:
+		// 1. El jugador anterior jugó una carta
+		// 2. El jugador actual juega la MISMA carta
+		// 3. Todas las cartas capturadas son del mismo rango
+		const previousPlayerCard = session.lastPlayedCard;
+		const allSameRank = selectedCards.length > 0 && selectedCards.every(card => card.rank === played.rank);
+		
+		if (previousPlayerCard === played.rank && allSameRank && session.lastPlayerId) {
+			// CAÍDA DETECTADA
+			caidaDetected = true;
+			session.teamCaidaCount[player.team]++;
+			
+			// Asignar puntos por caída
+			if (selectedCards.length > 0) {
+				const limpia = session.table.length === selectedCards.length; // Mesa queda vacía después de captura
+				if (limpia) {
+					verdict = awardPoints(session, player.team, RULES.caidaYLimpiaPoints, "caida_y_limpia");
+				} else {
+					verdict = awardPoints(session, player.team, RULES.caidaPoints, "caida");
+				}
+			}
+		}
+		
 		const captureResult = applyCapture(session, player, played, selectedCards);
-		verdict = captureResult.verdict;
+		verdict = verdict || captureResult.verdict;
 		session.lastPlay = null;
+		session.lastPlayedCard = null;
+		session.lastPlayerId = null;
 	}
 
 	if (session.ended) {
