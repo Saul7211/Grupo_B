@@ -16,7 +16,6 @@ import {
 import { enviarAlMotor } from './tcp-bridge.js';
 
 const app = express();
-app.use(express.static('../frontend'));
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
