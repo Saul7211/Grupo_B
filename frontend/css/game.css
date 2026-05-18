@@ -492,6 +492,9 @@ body {
   border: 1px solid #93c5fd;
 }
 
+.your-hand .card span {
+  color: #ff1414;
+}
 
 .your-hand .card:hover {
   transform: translateY(-6px);
