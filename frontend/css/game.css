@@ -487,7 +487,11 @@ body {
 .your-hand .card {
   cursor: pointer;
   transition: all 0.2s;
+  background: linear-gradient(160deg, #f8fafc, #dbeafe);
+  color: #111827;
+  border: 1px solid #93c5fd;
 }
+
 
 .your-hand .card:hover {
   transform: translateY(-6px);
