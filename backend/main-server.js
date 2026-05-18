@@ -14,6 +14,7 @@ import {
     registrarGanador,
 } from './database.js';
 import { enviarAlMotor } from './tcp-bridge.js';
+import { startUdpMonitor, sendUdpPing } from './udp-monitor.js';
 
 const app = express();
 app.use('/frontend', express.static('../frontend'));
@@ -415,4 +416,5 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`  SERVIDOR ACTIVO   →  Puerto: ${PORT}`);
     console.log(`  BASE DE DATOS     →  ${process.env.DB_NAME}`);
+    startUdpMonitor(io);
 });
