@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Juego 40 - Partida</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #06060a;
+      --surface: rgba(255,255,255,0.025);
+      --border: rgba(255,255,255,0.06);
+      --border-lit: rgba(255,255,255,0.12);
+      --text: #eee;
+      --text-dim: rgba(255,255,255,0.45);
+      --text-muted: rgba(255,255,255,0.2);
+      --gold: #c9a84c;
+      --gold-dim: rgba(201,168,76,0.18);
+      --gold-glow: rgba(201,168,76,0.06);
+      --teal: #4ecdc4;
+      --teal-dim: rgba(78,205,196,0.12);
+      --red: #e05555;
+      --card-w: 56px;
+      --card-h: 80px;
+      --card-bg: linear-gradient(160deg, rgba(255,255,255,0.08), rgba(255,255,255,0.025));
+      --card-back: linear-gradient(135deg, #1a1a2e 25%, #16213e 50%, #1a1a2e 75%);
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Navbar ── */
+    .navbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 1.5rem; height: 48px; flex-shrink: 0;
+      background: rgba(6,6,10,0.85); backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border); z-index: 50;
+    }
+
+    .nav-left { display: flex; align-items: center; gap: 1rem; }
+    .nav-brand { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 0.12em; }
+    .nav-status { font-size: 0.7rem; color: var(--text-muted); font-weight: 300; }
+    .nav-right { display: flex; align-items: center; gap: 0.6rem; }
+
+    .chip {
+      display: flex; align-items: center; gap: 0.4rem;
+      padding: 0.25rem 0.65rem; border-radius: 50px; font-size: 0.72rem; font-weight: 500;
+    }
+    .chip-gold { background: var(--gold-dim); border: 1px solid rgba(201,168,76,0.2); color: var(--gold); }
+    .chip-gold .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
+
+    .btn-nav {
+      background: none; border: none; color: var(--text-muted);
+      font-family: 'Outfit', sans-serif; font-size: 0.7rem;
+      cursor: pointer; padding: 0.3rem 0.5rem; border-radius: 5px; transition: all 0.2s;
+    }
+    .btn-nav:hover { color: var(--red); background: rgba(224,85,85,0.08); }
+
+    /* ── Game grid ── */
+    .game {
+      flex: 1; display: grid;
+      grid-template-columns: 130px 1fr 130px;
+      grid-template-rows: auto 1fr auto;
+      min-height: 0; position: relative;
+    }
+
+    .game::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 45%, rgba(201,168,76,0.012) 0%, transparent 60%);
+      pointer-events: none; z-index: 0;
+    }
+
+    .game > * { position: relative; z-index: 1; }
+
+    /* ── Player tag ── */
+    .ptag {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.25rem 0.65rem; border-radius: 8px;
+      background: var(--surface); border: 1px solid var(--border);
+      font-size: 0.72rem; font-weight: 500;
+    }
+    .ptag .tm {
+      font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.08em;
+      padding: 0.12rem 0.35rem; border-radius: 4px; font-weight: 600;
+    }
+    .tm-a { background: var(--teal-dim); color: var(--teal); }
+    .tm-b { background: var(--gold-dim); color: var(--gold); }
+
+    .card-count { font-size: 0.62rem; color: var(--text-muted); }
+
+    /* ── Top player (3) ── */
+    .top-player {
+      grid-column: 2; grid-row: 1;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 0.6rem 0 0.3rem; gap: 0.35rem;
+    }
+
+    .card-row { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; }
+
+    /* ── Side players (2 & 4) ── */
+    .side {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; padding: 0.5rem; gap: 0.4rem;
+    }
+    .side.left { grid-column: 1; grid-row: 2; }
+    .side.right { grid-column: 3; grid-row: 2; }
+
+    .vertical-cards { display: flex; flex-direction: column; gap: -20px; align-items: center; }
+
+    /* ── Center ── */
+    .center {
+      grid-column: 2; grid-row: 2;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 0.7rem; padding: 0.3rem; min-height: 0;
+    }
+
+    /* Score bar */
+    .scorebar {
+      display: flex; align-items: center; gap: 0;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .sb-cell {
+      padding: 0.4rem 0.8rem; text-align: center;
+      border-right: 1px solid var(--border);
+    }
+    .sb-cell:last-child { border-right: none; }
+
+    .sb-label {
+      font-size: 0.55rem; text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--text-muted); display: block; margin-bottom: 0.1rem;
+    }
+
+    .sb-val {
+      font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 0.04em;
+    }
+    .sb-val.gold { color: var(--gold); }
+    .sb-val.teal { color: var(--teal); }
+    .sb-val.white { color: var(--text); }
+
+    .sb-sub {
+      font-size: 0.55rem; color: var(--text-muted); display: block; margin-top: -1px;
+    }
+
+    /* Deck mini */
+    .deck-mini {
+      display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.8rem;
+    }
+
+    .deck-icon {
+      width: 28px; height: 40px; background: var(--card-back);
+      border: 1px solid var(--border-lit); border-radius: 4px; position: relative;
+      box-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+    }
+    .deck-icon::after {
+      content: '♠'; position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%,-50%); font-size: 12px; opacity: 0.12;
+    }
+
+    .deck-num { font-family: 'Bebas Neue', sans-serif; font-size: 1rem; color: var(--text-dim); }
+    .deck-txt { font-size: 0.55rem; color: var(--text-muted); }
+
+    /* Turn badge */
+    .turn-badge {
+      font-size: 0.72rem; font-weight: 500;
+      padding: 0.25rem 0.75rem; border-radius: 6px;
+      background: var(--gold-glow); border: 1px solid rgba(201,168,76,0.12);
+      color: var(--gold);
+    }
+
+    /* Table zone */
+    .table-zone {
+      display: flex; align-items: center; gap: 6px;
+      flex-wrap: wrap; justify-content: center;
+      padding: 0.8rem 1.2rem;
+      background: rgba(255,255,255,0.01); border: 1px solid var(--border);
+      border-radius: 14px; min-height: 100px; min-width: 260px;
+    }
+
+    .table-zone .card.selected {
+      outline: 2px solid var(--teal); outline-offset: 2px; transform: translateY(-4px);
+    }
+
+    /* ── Bottom (You) ── */
+    .bottom {
+      grid-column: 1 / -1; grid-row: 3;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 0.5rem 1rem 0.4rem;
+      background: rgba(255,255,255,0.015); border-top: 1px solid var(--border);
+    }
+
+    .your-info {
+      display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.4rem;
+    }
+    .your-name { font-size: 0.78rem; font-weight: 500; }
+    .your-hint { font-size: 0.65rem; color: var(--text-muted); font-weight: 300; }
+
+    .your-hand { display: flex; gap: 5px; justify-content: center; flex-wrap: wrap; margin-bottom: 0.5rem; }
+
+    .your-hand .card { cursor: pointer; transition: all 0.2s; }
+    .your-hand .card:hover {
+      transform: translateY(-6px); border-color: var(--border-lit);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+    }
+    .your-hand .card.selected {
+      transform: translateY(-8px); outline: 2px solid var(--gold); outline-offset: 2px;
+      box-shadow: 0 8px 24px rgba(201,168,76,0.15);
+    }
+
+    .actions { display: flex; gap: 0.5rem; }
+
+    .btn-play {
+      padding: 0.45rem 1.6rem; background: transparent;
+      border: 1.5px solid rgba(201,168,76,0.35); border-radius: 10px; color: var(--gold);
+      font-family: 'Outfit', sans-serif; font-size: 0.8rem; font-weight: 600;
+      cursor: pointer; transition: all 0.25s; letter-spacing: 0.03em;
+    }
+    .btn-play:hover { background: var(--gold-dim); border-color: var(--gold); box-shadow: 0 4px 16px rgba(201,168,76,0.12); }
+
+    .btn-sec {
+      padding: 0.45rem 1rem; background: none; border: 1px solid var(--border);
+      border-radius: 10px; color: var(--text-dim); font-family: 'Outfit', sans-serif;
+      font-size: 0.75rem; cursor: pointer; transition: all 0.2s;
+    }
+    .btn-sec:hover { background: var(--surface); border-color: var(--border-lit); }
+
+    .btn-danger {
+      padding: 0.45rem 0.9rem; background: none; border: 1px solid rgba(224,85,85,0.15);
+      border-radius: 10px; color: rgba(224,85,85,0.6); font-family: 'Outfit', sans-serif;
+      font-size: 0.75rem; cursor: pointer; transition: all 0.2s;
+    }
+    .btn-danger:hover { background: rgba(224,85,85,0.06); color: var(--red); }
+
+    /* ── Cards ── */
+    .card {
+      width: var(--card-w); height: var(--card-h);
+      background: var(--card-bg); border: 1px solid var(--border-lit);
+      border-radius: 7px; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 1px;
+      font-weight: 600; font-size: 0.82rem; transition: all 0.2s;
+      position: relative; flex-shrink: 0;
+    }
+    .card span { font-size: 1.05rem; line-height: 1; }
+
+    .card.back {
+      background: var(--card-back); border-color: rgba(255,255,255,0.06);
+    }
+    .card.back::after {
+      content: '♠'; position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%,-50%); font-size: 13px; opacity: 0.08;
+    }
+
+    .card.empty {
+      border-style: dashed; border-color: rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.01); color: var(--text-muted); font-size: 1.1rem;
+    }
+
+    /* ── Animations ── */
+    .update-flash { animation: flash 0.6s ease; }
+    @keyframes flash { 0% { color: #fff; transform: scale(1.2); } 100% { transform: scale(1); } }
+
+    .turn-indicator { animation: pulse 0.5s ease; }
+    @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+
+    .your-turn-banner {
+      position: absolute; top: 0; left: 0; right: 0; z-index: 20;
+      padding: 0.6rem; text-align: center; font-size: 0.85rem; font-weight: 600;
+      background: var(--gold-dim); border-bottom: 1px solid rgba(201,168,76,0.25);
+      color: var(--gold); animation: slideBanner 0.4s ease-out;
+    }
+    @keyframes slideBanner { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+
+    .your-turn { animation: glowPulse 1s ease-in-out 2; }
+    @keyframes glowPulse {
+      0%,100% { box-shadow: none; }
+      50% { box-shadow: 0 0 20px rgba(201,168,76,0.15); }
+    }
+
+    /* ── Disconnection ── */
+    .disconnection-warning {
+      position: fixed; top: 1rem; left: 50%; transform: translateX(-50%); z-index: 999;
+      padding: 1rem 1.5rem; background: rgba(224,85,85,0.12); backdrop-filter: blur(12px);
+      border: 1px solid rgba(224,85,85,0.25); border-radius: 12px;
+      text-align: center; color: var(--text); font-size: 0.85rem;
+      animation: slideBanner 0.4s ease-out;
+    }
+    .disconnection-warning strong { display: block; color: var(--red); margin-bottom: 0.3rem; }
+    .disconnection-warning p { font-size: 0.78rem; color: var(--text-dim); }
+
+    .reconnection-success {
+      position: fixed; top: 1rem; left: 50%; transform: translateX(-50%); z-index: 999;
+      padding: 0.75rem 1.5rem; background: rgba(78,205,196,0.12); backdrop-filter: blur(12px);
+      border: 1px solid rgba(78,205,196,0.25); border-radius: 12px;
+      color: var(--teal); font-size: 0.85rem; font-weight: 500;
+      animation: slideBanner 0.4s ease-out;
+    }
+
+    /* ── Victory modal ── */
+    .victory-overlay {
+      position: fixed; inset: 0; z-index: 1000;
+      background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity 0.4s;
+    }
+    .victory-overlay.show { opacity: 1; }
+
+    .victory-modal {
+      background: rgba(12,12,18,0.95); border: 1px solid var(--border);
+      border-radius: 20px; padding: 2.5rem 2rem; text-align: center;
+      max-width: 400px; width: 90%; transform: scale(0.9);
+      transition: transform 0.4s cubic-bezier(0.16,1,0.3,1);
+    }
+    .victory-overlay.show .victory-modal { transform: scale(1); }
+
+    .victory-header h1 {
+      font-family: 'Bebas Neue', sans-serif; font-size: 2rem;
+      letter-spacing: 0.1em; margin-bottom: 0.3rem;
+    }
+    .victory-header .team-name { font-size: 0.9rem; color: var(--gold); margin-bottom: 1.5rem; }
+
+    .victory-stats {
+      display: flex; gap: 1rem; justify-content: center; margin-bottom: 1.5rem;
+    }
+    .stat-box {
+      padding: 0.8rem 1.2rem; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; flex: 1;
+    }
+    .stat-label { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 0.3rem; }
+    .stat-value { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; }
+    .stat-value.winner { color: var(--gold); }
+    .stat-value.loser { color: var(--text-muted); }
+
+    .victory-details { margin-bottom: 1.5rem; }
+    .detail-row {
+      display: flex; justify-content: space-between; padding: 0.4rem 0;
+      border-bottom: 1px solid var(--border); font-size: 0.82rem;
+    }
+    .detail-row span { color: var(--text-dim); }
+    .detail-row strong { color: var(--text); }
+
+    .victory-btn {
+      padding: 0.8rem 2rem; background: transparent;
+      border: 1.5px solid rgba(201,168,76,0.35); border-radius: 12px;
+      color: var(--gold); font-family: 'Outfit', sans-serif; font-size: 0.9rem;
+      font-weight: 600; cursor: pointer; transition: all 0.25s;
+    }
+    .victory-btn:hover { background: var(--gold-dim); border-color: var(--gold); }
+
+    /* ── Ambient ── */
+    .glow {
+      position: fixed; border-radius: 50%; filter: blur(160px);
+      pointer-events: none; z-index: 0;
+    }
+    .glow-a { width: 350px; height: 350px; background: rgba(201,168,76,0.015); top: 10%; left: 30%; }
+    .glow-b { width: 300px; height: 300px; background: rgba(78,205,196,0.01); bottom: 15%; right: 25%; }
+
+    /* ── Responsive ── */
+    @media (max-width: 800px) {
+      .game { grid-template-columns: 80px 1fr 80px; }
+      .side .ptag { font-size: 0.62rem; padding: 0.2rem 0.4rem; }
+      .card { --card-w: 46px; --card-h: 66px; font-size: 0.72rem; }
+      .card span { font-size: 0.9rem; }
+      .scorebar { flex-wrap: wrap; }
+      .navbar { padding: 0 1rem; }
+    }
+
+    @media (max-width: 600px) {
+      .game { grid-template-columns: 60px 1fr 60px; }
+      .side .ptag span:not(.tm) { display: none; }
+      .table-zone { min-width: auto; padding: 0.6rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="glow glow-a"></div>
+  <div class="glow glow-b"></div>
+
+  <!-- Navbar -->
+  <header class="navbar">
+    <div class="nav-left">
+      <div class="nav-brand">JUEGO 40</div>
+      <span class="nav-status" id="statusText">Esperando cartas del motor...</span>
+    </div>
+    <div class="nav-right">
+      <div class="chip chip-gold">
+        <span class="dot"></span>
+        <span id="balanceText">$0.00</span>
+      </div>
+      <button id="logoutBtn" class="btn-nav">Salir</button>
+    </div>
+  </header>
+
+  <!-- Game -->
+  <div class="game">
+
+    <!-- Player 3 - top (partner) -->
+    <div class="top-player">
+      <div class="ptag">
+        <span id="player3Name">Jugador 3</span>
+        <span class="tm tm-a">Equipo A</span>
+      </div>
+      <div class="card-row" id="player3Cards"></div>
+      <span class="card-count">Cartas: <strong id="player3CardCount">0</strong></span>
+    </div>
+
+    <!-- Player 2 - left -->
+    <div class="side left">
+      <div class="ptag">
+        <span id="player2Name">Jugador 2</span>
+        <span class="tm tm-b">B</span>
+      </div>
+      <div class="vertical-cards" id="player2Cards"></div>
+      <span class="card-count">Cartas: <strong id="player2CardCount">0</strong></span>
+    </div>
+
+    <!-- Center -->
+    <div class="center">
+
+      <!-- Score bar -->
+      <div class="scorebar">
+        <div class="sb-cell">
+          <span class="sb-label">Equipo A</span>
+          <span class="sb-val teal" id="teamAScore">0</span>
+          <span class="sb-sub">Perros: <strong id="teamAPerros">0</strong></span>
+        </div>
+        <div class="sb-cell">
+          <span class="sb-label">Pozo</span>
+          <span class="sb-val gold" id="potText">$0.00</span>
+        </div>
+        <div class="sb-cell">
+          <span class="sb-label">Equipo B</span>
+          <span class="sb-val gold" id="teamBScore">0</span>
+          <span class="sb-sub">Perros: <strong id="teamBPerros">0</strong></span>
+        </div>
+        <div class="deck-mini">
+          <div class="deck-icon"></div>
+          <div>
+            <span class="deck-num" id="deckCount">0</span>
+            <span class="deck-txt">Mazo</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Turn -->
+      <span class="turn-badge" id="turnText">Esperando...</span>
+
+      <!-- Table -->
+      <div class="table-zone" id="tableCards">
+        <div class="card empty">+</div>
+      </div>
+
+    </div>
+
+    <!-- Player 4 - right -->
+    <div class="side right">
+      <div class="ptag">
+        <span id="player4Name">Jugador 4</span>
+        <span class="tm tm-b">B</span>
+      </div>
+      <div class="vertical-cards" id="player4Cards"></div>
+      <span class="card-count">Cartas: <strong id="player4CardCount">0</strong></span>
+    </div>
+
+    <!-- You - bottom -->
+    <div class="bottom">
+      <div class="your-info">
+        <span class="your-name" id="player1Name">Tus cartas</span>
+        <span class="your-hint">Selecciona una carta y opcionalmente cartas de la mesa para capturar</span>
+      </div>
+      <div class="your-hand card-row" id="player1Cards">
+        <div class="card empty">...</div>
+      </div>
+      <div class="actions">
+        <button class="btn-play" id="playCardBtn">Jugar carta</button>
+        <button class="btn-sec" id="clearSelectionBtn">Limpiar</button>
+        <button class="btn-danger" id="leaveRoomBtn">Salir de sala</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="socket-client.js"></script>
+
+</body>
+</html>

@@ -150,7 +150,7 @@ cp .env.example .env
 # Editar .env con tus credenciales de MySQL
 
 # 3. Instalar dependencias del backend
-cd backend-server
+cd backend
 npm install
 
 # 4. Arrancar el motor del juego (en otra terminal)

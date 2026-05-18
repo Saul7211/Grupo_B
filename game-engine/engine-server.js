@@ -89,8 +89,21 @@ function awardPoints(session, team, points, reason) {
 }
 
 function checkWin(session) {
+	// Verificar si algún equipo llegó a 40 puntos
 	if (session.teamScores.A >= POINTS_TO_WIN || session.teamScores.B >= POINTS_TO_WIN) {
 		const winnerTeam = session.teamScores.A >= POINTS_TO_WIN ? "A" : "B";
+		const loserTeam = winnerTeam === "A" ? "B" : "A";
+		
+		// Registrar evento de victoria
+		session.events.push({
+			type: "game_end",
+			winnerTeam,
+			reason: "40_points_reached",
+			winnerScore: session.teamScores[winnerTeam],
+			loserScore: session.teamScores[loserTeam],
+			message: `🏆 ¡EQUIPO ${winnerTeam} GANA! Llegó a ${session.teamScores[winnerTeam]} puntos`
+		});
+		
 		return endRound(session, "chica", winnerTeam);
 	}
 	return null;
@@ -230,12 +243,23 @@ function validateCaptureSelection(session, playedCard, selectedCards) {
 		return { type: "none" };
 	}
 
+	// Validar que todas las cartas seleccionadas existan en la mesa
+	for (const selected of selectedCards) {
+		const exists = session.table.some(card => card.id === selected.id);
+		if (!exists) {
+			throw new Error("Invalid card selection - card not on table");
+		}
+	}
+
+	// CAPTURA POR IGUALDAD (Escalera): La carta jugada es igual a una o más cartas de la mesa
 	const hasEqual = selectedCards.some((card) => card.rank === playedCard.rank);
 	if (hasEqual) {
 		validateEscaleraSelection(playedCard, selectedCards);
 		return { type: "equal" };
 	}
 
+	// CAPTURA POR SUMA: Las cartas de la mesa suman exactamente el valor de la carta jugada
+	// Ej: Carta jugada = 7, Cartas mesa seleccionadas = [3, 4] → suma 7 = Captura exitosa
 	const total = selectedCards.reduce((sum, card) => sum + rankValue(card.rank), 0);
 	if (total !== rankValue(playedCard.rank)) {
 		throw new Error("Sum capture does not match played card value");
@@ -249,29 +273,44 @@ function removeCardsFromTable(session, cardIds) {
 }
 
 function applyCapture(session, player, playedCard, selectedCards) {
+	// Remover las cartas capturadas de la mesa
 	removeCardsFromTable(session, selectedCards.map((card) => card.id));
+	
+	// Las cartas capturadas van al "cartón" del equipo
+	// Incluye: cartas de la mesa seleccionadas + carta jugada
 	const capturedCards = [...selectedCards, playedCard];
 	player.captured.push(...capturedCards);
 	player.hasCaptured = true;
+	
+	// Sumar al conteo de cartas capturadas del equipo (para el cartón)
 	session.teamCapturedCount[player.team] += capturedCards.length;
+	
 	const limpia = session.table.length === 0;
 	let caida = false;
 	let verdict = null;
 
-	if (session.lastPlay) {
-		const prevPlayerId = session.order[(session.turnIndex - 1 + session.order.length) % session.order.length];
-		const isPrevPlayer = session.lastPlay.playerId === prevPlayerId;
-		const includesLast = selectedCards.some((card) => card.id === session.lastPlay.cardId);
-		if (isPrevPlayer && includesLast && session.lastPlay.rank === playedCard.rank) {
-			caida = true;
-		}
+	// CAÍDA: Todas las cartas capturadas son del mismo rango que la jugada
+	// Casos:
+	// ✓ Captura por igualdad: Juego 5, captura dos 5s de mesa → CAÍDA
+	// ✗ Captura por suma: Juego 5, captura 2+3 (suma 5) → NO es caída, es suma
+	const allSameRank = selectedCards.length > 0 && selectedCards.every(card => card.rank === playedCard.rank);
+	if (allSameRank) {
+		caida = true;
 	}
 
+	// Calcular puntos según el tipo de captura
 	if (caida && limpia) {
+		// CAÍDA + LIMPIA: Captura por igualdad + mesa queda vacía
 		verdict = awardPoints(session, player.team, RULES.caidaYLimpiaPoints, "caida_y_limpia");
 	} else {
-		if (caida) verdict = awardPoints(session, player.team, RULES.caidaPoints, "caida");
-		if (limpia) verdict = awardPoints(session, player.team, RULES.limpiaPoints, "limpia");
+		if (caida) {
+			// CAÍDA (sin limpia): Solo captura por igualdad
+			verdict = awardPoints(session, player.team, RULES.caidaPoints, "caida");
+		}
+		if (limpia) {
+			// LIMPIA (sin caída): Puede ser captura por suma o igualdad, pero mesa queda vacía
+			verdict = awardPoints(session, player.team, RULES.limpiaPoints, "limpia");
+		}
 	}
 
 	return { caida, limpia, verdict };
@@ -280,11 +319,14 @@ function applyCapture(session, player, playedCard, selectedCards) {
 function finishCarton(session) {
 	const cardsA = session.teamCapturedCount.A;
 	const cardsB = session.teamCapturedCount.B;
+	
+	// REGLA: Si un equipo no capturó ninguna carta, el otro equipo gana 2 puntos (falla)
 	if (cardsA === 0 || cardsB === 0) {
 		const winningTeam = cardsA === 0 ? "B" : "A";
 		awardPoints(session, winningTeam, RULES.fallaPoints, "falla");
 	}
 
+	// REGLA: Si ambos equipos tienen igual cantidad de cartas y <= 20, el próximo dealer gana 2 puntos
 	if (cardsA === cardsB && cardsA <= 20) {
 		const nextDealerIndex = (session.dealerIndex + 1) % session.order.length;
 		const nextDealerId = session.order[nextDealerIndex];
@@ -293,14 +335,23 @@ function finishCarton(session) {
 		return;
 	}
 
+	// REGLA DEL CARTÓN (CORREGIDA):
+	// Si tienes menos de 20 cartas: 0 puntos
+	// Si tienes 20+ cartas: 6 puntos base + 2 por cada carta adicional después de 20
+	// Ejemplos:
+	//   20 cartas = 6 puntos
+	//   21 cartas = 8 puntos (6 + 2)
+	//   22 cartas = 10 puntos (6 + 4)
+	//   23 cartas = 12 puntos (6 + 6)
 	function cartonPoints(cards) {
 		if (cards < 20) return 0;
-		const extra = cards - 20;
-		return 6 + 2 * Math.ceil(extra / 2);
+		// A partir de 20 cartas: 6 + 2*(cartas - 20)
+		return 6 + 2 * (cards - 20);
 	}
 
 	const cartonA = cartonPoints(cardsA);
 	const cartonB = cartonPoints(cardsB);
+	
 	if (cartonA > cartonB) {
 		awardPoints(session, "A", cartonA, "carton");
 	} else if (cartonB > cartonA) {
@@ -314,16 +365,34 @@ function endRound(session, reason, winnerTeam = null) {
 	}
 
 	const winnerIds = session.order.filter((id) => getTeamForPlayer(session, id) === winnerTeam);
+	const loserTeam = winnerTeam === "A" ? "B" : "A";
+	const loserIds = session.order.filter((id) => getTeamForPlayer(session, id) === loserTeam);
+	
+	// Crear mensaje de victoria personalizado
+	let victoryMessage = "";
+	if (reason === "chica") {
+		// Victoria por llegar a 40 puntos
+		victoryMessage = `🏆 ¡EQUIPO ${winnerTeam} HA GANADO LA PARTIDA!\n\n` +
+			`Equipo ${winnerTeam}: ${session.teamScores[winnerTeam]} puntos\n` +
+			`Equipo ${loserTeam}: ${session.teamScores[loserTeam]} puntos\n\n` +
+			`Cartas capturadas:\n` +
+			`Equipo ${winnerTeam}: ${session.teamCapturedCount[winnerTeam]} cartas\n` +
+			`Equipo ${loserTeam}: ${session.teamCapturedCount[loserTeam]} cartas`;
+	}
+	
 	const verdict = {
 		reason,
 		winnerTeam,
 		winnerIds,
 		winnerId: winnerIds[0] || null,
+		loserTeam,
+		loserIds,
 		round: session.round,
 		teamScores: session.teamScores,
 		teamCapturedCount: session.teamCapturedCount,
 		events: session.events,
 		pot: session.betting.pot,
+		victoryMessage: victoryMessage
 	};
 
 	session.started = false;
