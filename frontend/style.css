@@ -369,6 +369,157 @@ button.card:hover {
 
 /* BOTONES */
 
+/* ANIMACIONES DE TURNO */
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(56, 216, 120, 0.5), inset 0 0 10px rgba(56, 216, 120, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(56, 216, 120, 0.8), inset 0 0 15px rgba(56, 216, 120, 0.5);
+  }
+}
+
+@keyframes shake-notify {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-3px); }
+  20%, 40%, 60%, 80% { transform: translateX(3px); }
+}
+
+@keyframes blink-alert {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes turn-slide {
+  from {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* CLASES DINÁMICAS */
+
+.your-turn {
+  animation: pulse-glow 1.5s ease-in-out infinite;
+  border: 2px solid #38d878 !important;
+}
+
+.turn-indicator {
+  animation: shake-notify 0.5s ease-in-out;
+}
+
+.your-turn-banner {
+  animation: turn-slide 0.4s ease-out;
+  background: linear-gradient(135deg, #38d878 0%, #2ecc71 100%);
+  color: white;
+  padding: 12px 16px;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: bold;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 15px rgba(56, 216, 120, 0.4);
+}
+
+/* TARJETAS DE EQUIPO - CARTÓN Y PERROS */
+
+.team-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 12px 0;
+}
+
+.team-card {
+  padding: 12px;
+  border-radius: 8px;
+  border: 2px solid;
+  background: rgba(255, 255, 255, 0.05);
+  transition: all 0.3s ease;
+}
+
+.team-card.team-a {
+  border-color: #3a9fd8;
+  background: linear-gradient(135deg, rgba(58, 159, 216, 0.1), rgba(56, 216, 120, 0.05));
+}
+
+.team-card.team-b {
+  border-color: #d84545;
+  background: linear-gradient(135deg, rgba(216, 69, 69, 0.1), rgba(216, 69, 69, 0.05));
+}
+
+.team-label {
+  display: block;
+  font-weight: bold;
+  font-size: 14px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.team-a .team-label {
+  color: #3a9fd8;
+}
+
+.team-b .team-label {
+  color: #d84545;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  font-size: 13px;
+  margin: 4px 0;
+}
+
+.stat-row span {
+  color: #b0c4de;
+}
+
+.stat-row strong {
+  font-size: 16px;
+  font-weight: bold;
+  min-width: 40px;
+  text-align: right;
+}
+
+.team-a .stat-row strong {
+  color: #3a9fd8;
+}
+
+.team-b .stat-row strong {
+  color: #d84545;
+}
+
+/* ANIMACIÓN DE ACTUALIZACIÓN */
+
+.stat-row strong.update-flash {
+  animation: stat-update 0.6s ease-in-out;
+}
+
+@keyframes stat-update {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* ACCIONES PANEL */
+
 .action-panel button {
 
   border: none;
@@ -545,4 +696,322 @@ button.card:hover {
 
 .table-cards .card.selected {
   transform: scale(1.08);
+}
+
+/* ═════════════════════════════════════════════════════════════════ */
+/* NOTIFICACIONES DE DESCONEXIÓN Y RECONEXIÓN */
+/* ═════════════════════════════════════════════════════════════════ */
+
+.disconnection-warning {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+  color: white;
+  padding: 16px 24px;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(255, 107, 107, 0.4);
+  z-index: 1000;
+  max-width: 400px;
+  text-align: center;
+  animation: slide-down 0.4s ease-out;
+  font-weight: bold;
+}
+
+.disconnection-warning strong {
+  display: block;
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+.disconnection-warning p {
+  font-size: 14px;
+  margin: 4px 0;
+}
+
+.disconnection-warning span {
+  display: inline-block;
+  min-width: 30px;
+  font-weight: bold;
+  color: #fff;
+}
+
+.reconnection-success {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #51cf66 0%, #40c057 100%);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(81, 207, 102, 0.4);
+  z-index: 1000;
+  font-weight: bold;
+  animation: slide-down 0.4s ease-out;
+}
+
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* ═════════════════════════════════════════════════════════════════ */
+/* INDICADOR DE TURNO PARPADEANTE */
+/* ═════════════════════════════════════════════════════════════════ */
+
+#turnText.turn-indicator {
+  animation: pulse-turn 0.6s ease-in-out;
+  color: #ffd166;
+}
+
+@keyframes pulse-turn {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.05);
+  }
+}
+
+/* Animación de notificación de turno */
+.your-turn-banner {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 16px 24px;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 18px;
+  margin-bottom: 16px;
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+  animation: turn-slide 0.4s ease-out;
+}
+
+@keyframes turn-slide {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.player-card.player1 .card-row.your-turn {
+  animation: highlight-hand 0.6s ease-in-out;
+}
+
+@keyframes highlight-hand {
+  0%, 100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.2);
+  }
+}
+
+/* ═════════════════════════════════════════════════════════════════ */
+/* MODAL DE VICTORIA - JUGADOR GANADOR */
+/* ═════════════════════════════════════════════════════════════════ */
+
+.victory-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.victory-overlay.show {
+  opacity: 1;
+}
+
+.victory-modal {
+  background: linear-gradient(135deg, #1a1f2e 0%, #0f1319 100%);
+  border: 3px solid #ffd166;
+  border-radius: 16px;
+  padding: 40px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 
+    0 0 40px rgba(255, 209, 102, 0.6),
+    0 20px 60px rgba(0, 0, 0, 0.8);
+  animation: victory-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  text-align: center;
+  color: white;
+}
+
+.victory-modal.team-A {
+  border-color: #51cf66;
+  box-shadow: 
+    0 0 40px rgba(81, 207, 102, 0.6),
+    0 20px 60px rgba(0, 0, 0, 0.8);
+}
+
+.victory-modal.team-B {
+  border-color: #ff6b6b;
+  box-shadow: 
+    0 0 40px rgba(255, 107, 107, 0.6),
+    0 20px 60px rgba(0, 0, 0, 0.8);
+}
+
+.victory-header {
+  margin-bottom: 30px;
+}
+
+.victory-header h1 {
+  font-size: 48px;
+  font-weight: bold;
+  margin-bottom: 12px;
+  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+  animation: victory-bounce 0.6s ease;
+}
+
+.victory-header .team-name {
+  font-size: 24px;
+  font-weight: bold;
+  margin: 0;
+}
+
+.victory-modal.team-A .team-name {
+  color: #51cf66;
+}
+
+.victory-modal.team-B .team-name {
+  color: #ff6b6b;
+}
+
+.victory-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-box {
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 209, 102, 0.3);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #9fb1c9;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+.stat-value {
+  font-size: 36px;
+  font-weight: bold;
+}
+
+.stat-value.winner {
+  color: #ffd166;
+  text-shadow: 0 0 10px rgba(255, 209, 102, 0.6);
+}
+
+.stat-value.loser {
+  color: #888;
+}
+
+.victory-details {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 24px;
+  text-align: left;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 14px;
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-row span {
+  color: #9fb1c9;
+}
+
+.detail-row strong {
+  color: #ffd166;
+  font-weight: bold;
+}
+
+.victory-btn {
+  background: linear-gradient(135deg, #ffd166 0%, #ffb347 100%);
+  color: #0f1319;
+  border: none;
+  padding: 14px 32px;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 20px rgba(255, 209, 102, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.victory-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(255, 209, 102, 0.6);
+}
+
+.victory-btn:active {
+  transform: translateY(0);
+}
+
+@keyframes victory-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.3) rotateX(-30deg);
+  }
+  50% {
+    transform: scale(1.1) rotateX(10deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotateX(0);
+  }
+}
+
+@keyframes victory-bounce {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-10px) scale(1.05);
+  }
 }

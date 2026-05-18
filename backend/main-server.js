@@ -27,6 +27,8 @@ const io = new Server(server, {
 
 // Estructura en memoria para salas y jugadores
 export const salasPendientes = new Map(); // sessionId -> { jugadores: [userId], monto, creadorId, timeoutId }
+const jugadoresEnPartida = new Map(); // userId -> { sessionId, socketId, timeoutId }
+const DESCONEXION_TIMEOUT = 40000; // 40 segundos
 
 io.on('connection', (socket) => {
     console.log('Cliente conectado vía WebSocket:', socket.id);
@@ -43,12 +45,36 @@ io.on('connection', (socket) => {
         }
     });
 
-    // 2. LOGIN 
+    // 2. LOGIN (Y RECONEXIÓN EN PARTIDA EN PROGRESO)
 
-    socket.on('login_usuario', async ({ username, password }) => {
+    socket.on('login_usuario', async ({ username, password, sessionId }) => {
         try {
             if (!username || !password) throw new Error('Usuario y contraseña son obligatorios.');
             const resultado = await loginUsuario(username, password);
+            const userId = resultado.id;
+
+            // Verificar si el usuario tiene una desconexión pendiente en una partida
+            if (sessionId && jugadoresEnPartida.has(userId)) {
+                const playerInfo = jugadoresEnPartida.get(userId);
+                
+                // Si hay un timeout pendiente, cancelarlo
+                if (playerInfo.timeoutId) {
+                    clearTimeout(playerInfo.timeoutId);
+                    console.log(`[RECONEXIÓN] Usuario ${userId} se reconectó en sesión ${sessionId}`);
+
+                    // Notificar a otros jugadores sobre la reconexión
+                    io.emit('jugador_reconectado', {
+                        sessionId,
+                        userId,
+                        mensaje: `El usuario ${userId} se ha reconectado`
+                    });
+                }
+
+                // Actualizar el socket ID
+                playerInfo.socketId = socket.id;
+                playerInfo.timeoutId = null;
+            }
+
             socket.emit('login_exitoso', resultado);
         } catch (err) {
             socket.emit('error_notificacion', err.message);
@@ -167,6 +193,13 @@ io.on('connection', (socket) => {
                 mensaje: `Jugador unido (${sala.jugadores.length}/4)`
             });
 
+            // Registrar al usuario en la partida
+            jugadoresEnPartida.set(userId, {
+                sessionId,
+                socketId: socket.id,
+                timeoutId: null
+            });
+
             // Si ya hay 4 jugadores distintos (salaLlena true), iniciar partida
             if (resultado.salaLlena) {
                 console.log(`[aceptar_partida] Partida ${sessionId} lista con 4 jugadores. Enviando al motor...`);
@@ -181,7 +214,7 @@ io.on('connection', (socket) => {
                     sessionId,
                     mensaje: '¡Partida lista! El motor está barajando...'
                 });
-                salasPendientes.delete(sessionId); // Eliminar de la lista de pendientes
+                salasPendientes.delete(sessionId); // Elimimar de la lista de pendientes
             }
         } catch (err) {
             socket.emit('error_notificacion', 'Error al unirse: ' + err.message);
@@ -229,6 +262,56 @@ io.on('connection', (socket) => {
 
     socket.on('disconnect', () => {
         console.log('Cliente desconectado:', socket.id);
+
+        // Buscar si el usuario estaba en una partida
+        let desconectadoUserId = null;
+        for (const [userId, info] of jugadoresEnPartida.entries()) {
+            if (info.socketId === socket.id) {
+                desconectadoUserId = userId;
+                break;
+            }
+        }
+
+        if (desconectadoUserId) {
+            const playerInfo = jugadoresEnPartida.get(desconectadoUserId);
+            const sessionId = playerInfo.sessionId;
+
+            console.log(`[DESCONEXIÓN] Usuario ${desconectadoUserId} desconectado de sesión ${sessionId}`);
+
+            // Notificar a otros jugadores sobre la desconexión
+            io.emit('jugador_desconectado', {
+                sessionId,
+                userId: desconectadoUserId,
+                mensaje: `El usuario ${desconectadoUserId} se desconectó. Esperando 40 segundos para reintento...`
+            });
+
+            // Iniciar timeout de 40 segundos
+            const timeoutId = setTimeout(async () => {
+                // Verificar si el usuario sigue desconectado
+                const stillDisconnected = jugadoresEnPartida.get(desconectadoUserId)?.timeoutId === timeoutId;
+
+                if (stillDisconnected) {
+                    console.log(`[TIMEOUT] Usuario ${desconectadoUserId} no se reconectó en 40 segundos. Cerrando sesión...`);
+
+                    // Notificar a todos los jugadores que la sesión se cierra
+                    io.emit('sesion_cerrada', {
+                        sessionId,
+                        razón: `El jugador ${desconectadoUserId} no se reconectó en 40 segundos.`,
+                        mensaje: 'La partida ha sido cerrada por inactividad.'
+                    });
+
+                    // Limpiar la sesión
+                    jugadoresEnPartida.delete(desconectadoUserId);
+                    salasPendientes.delete(sessionId);
+
+                    // Devolver saldo a todos los jugadores de esa sesión (si es necesario)
+                    // Esto se podría implementar consultando a BD si es necesario
+                }
+            }, DESCONEXION_TIMEOUT);
+
+            // Actualizar la información del usuario con el timeout
+            playerInfo.timeoutId = timeoutId;
+        }
     });
 });
 
