@@ -251,6 +251,40 @@ socket.on("partida_creada", (data) => {
   showToast(data.mensaje, "game", 5000);
 });
 
+socket.on("salas_pendientes", (salas) => {
+  if (!roomsList) return;
+
+  roomsList.innerHTML = "";
+
+  if (!salas || salas.length === 0) {
+    const emptyMsg = document.createElement("div");
+    emptyMsg.className = "empty-message";
+    emptyMsg.textContent = "No hay salas disponibles";
+    roomsList.appendChild(emptyMsg);
+    return;
+  }
+
+  salas.forEach((room) => {
+    const item = document.createElement("div");
+    item.className = "room-item";
+
+    item.innerHTML = `
+      <div>
+        <strong>Código de sala</strong>
+        <p>${room.sessionId}</p>
+        <span>Apuesta: $${Number(room.monto).toFixed(2)}</span>
+      </div>
+      <button class="primary-btn">Unirse</button>
+    `;
+
+    item.querySelector("button").addEventListener("click", () => {
+      joinRoom(room.sessionId);
+    });
+
+    roomsList.appendChild(item);
+  });
+});
+
 socket.on("nueva_sala_disponible", (room) => {
   if (!roomsList) return;
 
@@ -335,13 +369,13 @@ socket.on("jugador_desconectado", (data) => {
   notification.innerHTML = `
     <strong>⚠️ Jugador desconectado</strong>
     <p>${data.mensaje}</p>
-    <p>Esperando reconexión... <span id="countdownTimer">40</span>s</p>
+    <p>Esperando reconexión... <span id="countdownTimer">300</span>s</p>
   `;
   
   document.body.appendChild(notification);
   
   // Mostrar countdown
-  let timeLeft = 40;
+  let timeLeft = 300;
   const timerEl = document.getElementById("countdownTimer");
   
   disconnectionCountdown = setInterval(() => {
