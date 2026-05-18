@@ -3,8 +3,38 @@ import net from 'net';
 const MOTOR_PORT = 5000;
 const MOTOR_HOST = '127.0.0.1';
 
-// Importar la estructura de salas desde main-server.js
-import { salasPendientes } from './main-server.js';
+import { salasPendientes, partidasActivas, emitToSession } from './main-server.js';
+
+/**
+ * Busca los jugadores de una sesión (primero activas, luego pendientes).
+ */
+function getJugadoresDeSesion(sessionId) {
+    const activa = partidasActivas.get(sessionId);
+    if (activa && activa.jugadores) return activa.jugadores;
+
+    const pendiente = salasPendientes.get(sessionId);
+    if (pendiente && pendiente.jugadores) return pendiente.jugadores;
+
+    return [];
+}
+
+/**
+ * Busca los nombres de usuario para una lista de IDs.
+ */
+async function buscarNombresJugadores(jugadorIds) {
+    const nombres = {};
+    for (const userId of jugadorIds) {
+        try {
+            const [rows] = await import('./database.js').then(db =>
+                db.pool.execute('SELECT username FROM users WHERE id = ?', [userId])
+            );
+            if (rows.length > 0) {
+                nombres[userId] = rows[0].username;
+            }
+        } catch {}
+    }
+    return nombres;
+}
 
 /**
  * Envía datos al Motor de Juego vía TCP y devuelve la respuesta.
@@ -24,70 +54,53 @@ export function enviarAlMotor(datosJson, io) {
 
         try {
             let respuesta = JSON.parse(data.toString());
+            const sessionId = respuesta.sessionId;
 
-            // Buscar nombres de jugadores si hay sessionId
-            if (respuesta.sessionId) {
-                let jugadoresNombres = {};
-                // Buscar en salasPendientes primero
-                const sala = salasPendientes.get(respuesta.sessionId);
-                if (sala && sala.jugadores) {
-                    // Buscar nombres en la base de datos
-                    for (const userId of sala.jugadores) {
-                        try {
-                            const [rows] = await import('./database.js').then(db => db.pool.execute('SELECT username FROM users WHERE id = ?', [userId]));
-                            if (rows.length > 0) {
-                                jugadoresNombres[userId] = rows[0].username;
-                            }
-                        } catch {}
-                    }
-                }
-                respuesta.jugadoresNombres = jugadoresNombres;
+            // Buscar nombres de jugadores
+            if (sessionId) {
+                const jugadores = getJugadoresDeSesion(sessionId);
+                respuesta.jugadoresNombres = await buscarNombresJugadores(jugadores);
             }
 
-            // Si falta la propiedad 'hands' pero hay 'sessionId' y 'state', pedimos el estado actualizado
-            if (respuesta.sessionId && respuesta.state && !respuesta.hands) {
-                // Pedimos el estado completo al motor
+            // Si falta 'hands' pero hay 'state', pedir estado completo
+            if (sessionId && respuesta.state && !respuesta.hands) {
                 const req = new net.Socket();
                 req.connect(MOTOR_PORT, MOTOR_HOST, () => {
                     req.write(JSON.stringify({
                         action: 'GET_STATE',
-                        sessionId: respuesta.sessionId
-                    }));
+                        sessionId
+                    }) + "\n");
                 });
                 req.on('data', async (d) => {
                     try {
                         const estado = JSON.parse(d.toString());
                         respuesta.hands = estado.hands || {};
-                        // Repetir nombres
-                        if (respuesta.sessionId) {
-                            let jugadoresNombres = {};
-                            const sala = salasPendientes.get(respuesta.sessionId);
-                            if (sala && sala.jugadores) {
-                                for (const userId of sala.jugadores) {
-                                    try {
-                                        const [rows] = await import('./database.js').then(db => db.pool.execute('SELECT username FROM users WHERE id = ?', [userId]));
-                                        if (rows.length > 0) {
-                                            jugadoresNombres[userId] = rows[0].username;
-                                        }
-                                    } catch {}
-                                }
-                            }
-                            respuesta.jugadoresNombres = jugadoresNombres;
+
+                        if (sessionId) {
+                            const jugadores = getJugadoresDeSesion(sessionId);
+                            respuesta.jugadoresNombres = await buscarNombresJugadores(jugadores);
                         }
-                        if (io) io.emit('evento_motor', respuesta);
+
+                        if (io && sessionId) {
+                            emitToSession(io, sessionId, 'evento_motor', respuesta);
+                        }
                     } catch (e) {
                         console.error('[TCP Bridge] Error parseando estado:', d.toString());
-                        if (io) io.emit('evento_motor', respuesta);
+                        if (io && sessionId) {
+                            emitToSession(io, sessionId, 'evento_motor', respuesta);
+                        }
                     }
                     req.destroy();
                 });
                 req.on('error', (err) => {
                     console.error('[TCP Bridge] Error pidiendo estado:', err.message);
-                    if (io) io.emit('evento_motor', respuesta);
+                    if (io && sessionId) {
+                        emitToSession(io, sessionId, 'evento_motor', respuesta);
+                    }
                 });
             } else {
-                if (respuesta.sessionId && io) {
-                    io.emit('evento_motor', respuesta);
+                if (io && sessionId) {
+                    emitToSession(io, sessionId, 'evento_motor', respuesta);
                 }
             }
         } catch (e) {

@@ -42,7 +42,7 @@ socket.on("sala_expirada", (data) => {
   showToast(data.mensaje, 'warn', 5000);
   // Si el usuario estaba en esa sala, limpiar y volver al lobby
   if (currentSessionId === data.sessionId) {
-    localStorage.removeItem("currentSessionId");
+    sessionStorage.removeItem("currentSessionId");
     window.location.href = "lobby.html";
   }
 });
@@ -51,16 +51,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const logoutBtn = document.getElementById("logoutBtn");
   if (logoutBtn) {
     logoutBtn.addEventListener("click", () => {
-      localStorage.removeItem("currentUser");
-      localStorage.removeItem("currentSessionId");
+      sessionStorage.removeItem("currentUser");
+      sessionStorage.removeItem("currentSessionId");
       window.location.href = "login.html";
     });
   }
 });
 
 
-let currentUser = JSON.parse(localStorage.getItem("currentUser")) || null;
-let currentSessionId = localStorage.getItem("currentSessionId") || null;
+let currentUser = JSON.parse(sessionStorage.getItem("currentUser")) || null;
+let currentSessionId = sessionStorage.getItem("currentSessionId") || null;
 let selectedCard = null;
 let selectedCaptureCards = [];
 let playersMap = {};
@@ -117,7 +117,7 @@ if (loginBtn) {
 
 socket.on("login_exitoso", (data) => {
   currentUser = data;
-  localStorage.setItem("currentUser", JSON.stringify(data));
+  sessionStorage.setItem("currentUser", JSON.stringify(data));
   
   // Si tenía una sessionId guardada, intentar reconectar a esa sesión
   if (currentSessionId) {
@@ -160,10 +160,14 @@ socket.on("registro_exitoso", () => {
 socket.on("connect", () => {
   if (statusText) statusText.textContent = "Conectado";
   
-  // Si había una sesión en progreso, pedir actualización del estado
-  if (currentSessionId && currentUser && page === "game.html") {
-    console.log("Reconectando a sesión en progreso:", currentSessionId);
-    // El servidor enviará el estado automáticamente
+  // Identificarse con el servidor al conectar/reconectar
+  // Sin esto, el servidor no sabe qué socket pertenece a qué jugador
+  if (currentSessionId && currentUser) {
+    console.log("Identificando jugador en sesión:", currentSessionId);
+    socket.emit('identificar_jugador', {
+      userId: currentUser.userId,
+      sessionId: currentSessionId
+    });
   }
 });
 
@@ -212,7 +216,7 @@ if (rechargeBtn) {
 
 socket.on("saldo_recargado", (data) => {
   currentUser.balance = data.nuevoSaldo;
-  localStorage.setItem("currentUser", JSON.stringify(currentUser));
+  sessionStorage.setItem("currentUser", JSON.stringify(currentUser));
 
   if (balanceText) {
     balanceText.textContent = `$${Number(data.nuevoSaldo).toFixed(2)}`;
@@ -239,8 +243,8 @@ if (createRoomBtn) {
 
 socket.on("partida_creada", (data) => {
   currentSessionId = data.sessionId;
-  localStorage.setItem("currentSessionId", data.sessionId);
-  localStorage.removeItem("lastGameState");
+  sessionStorage.setItem("currentSessionId", data.sessionId);
+  sessionStorage.removeItem("lastGameState");
 
   const roomCode = document.getElementById("createdRoomCode");
   const roomBox = document.getElementById("createdRoomBox");
@@ -337,15 +341,15 @@ function joinRoom(sessionId) {
 // Solo la cuenta que recibe 'unido_a_sala' o 'juego_iniciado' debe cambiar de vista
 socket.on("unido_a_sala", (data) => {
   currentSessionId = data.sessionId;
-  localStorage.setItem("currentSessionId", data.sessionId);
+  sessionStorage.setItem("currentSessionId", data.sessionId);
   // Espera a que se inicie la partida para ir a game.html
   showToast(data.mensaje, "game");
 });
 
 socket.on("juego_iniciado", (data) => {
   currentSessionId = data.sessionId;
-  localStorage.setItem("currentSessionId", data.sessionId);
-  localStorage.removeItem("lastGameState");
+  sessionStorage.setItem("currentSessionId", data.sessionId);
+  sessionStorage.removeItem("lastGameState");
 
   showToast(data.mensaje, "game", 3000);
 
@@ -430,8 +434,8 @@ socket.on("sesion_cerrada", (data) => {
   }
   
   // Limpiar datos de sesión
-  localStorage.removeItem("currentSessionId");
-  localStorage.removeItem("lastGameState");
+  sessionStorage.removeItem("currentSessionId");
+  sessionStorage.removeItem("lastGameState");
   
   showToast(`La partida ha finalizado — ${data.razón}`, "err", 6000);
   
@@ -555,7 +559,7 @@ socket.on("evento_motor", (event) => {
   console.log("Evento del motor:", event);
 
   if (event.sessionId) {
-    localStorage.setItem("currentSessionId", event.sessionId);
+    sessionStorage.setItem("currentSessionId", event.sessionId);
   }
 
   if (
@@ -563,7 +567,7 @@ socket.on("evento_motor", (event) => {
     event.action === "STATE_UPDATE" ||
     event.action === "FINAL"
   ) {
-    localStorage.setItem("lastGameState", JSON.stringify(event));
+    sessionStorage.setItem("lastGameState", JSON.stringify(event));
     renderGameState(event);
   }
 
@@ -588,7 +592,7 @@ socket.on("evento_motor", (event) => {
 
 if (page === "game.html") {
 
-  const lastGameState = localStorage.getItem("lastGameState");
+  const lastGameState = sessionStorage.getItem("lastGameState");
 
   if (lastGameState) {
 
@@ -597,7 +601,7 @@ if (page === "game.html") {
     if (parsedState.sessionId === currentSessionId) {
       renderGameState(parsedState);
     } else {
-      localStorage.removeItem("lastGameState");
+      sessionStorage.removeItem("lastGameState");
 
       if (statusText) {
         statusText.textContent = "Esperando estado del motor...";
@@ -1047,7 +1051,7 @@ if (playCardBtn) {
 
 if (leaveRoomBtn) {
   leaveRoomBtn.addEventListener("click", () => {
-    localStorage.removeItem("currentSessionId");
+    sessionStorage.removeItem("currentSessionId");
     window.location.href = "lobby.html";
   });
 }
