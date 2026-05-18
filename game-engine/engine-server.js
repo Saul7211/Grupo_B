@@ -625,18 +625,16 @@ function handlePlay(session, playerId, payload) {
 		const allSameRank = selectedCards.length > 0 && selectedCards.every(card => card.rank === played.rank);
 		
 		if (previousPlayerCard === played.rank && allSameRank && session.lastPlayerId) {
-			// CAÍDA DETECTADA
+			// CAÍDA DETECTADA - Siempre se asignan puntos
 			caidaDetected = true;
 			session.teamCaidaCount[player.team]++;
 			
-			// Asignar puntos por caída
-			if (selectedCards.length > 0) {
-				const limpia = session.table.length === selectedCards.length; // Mesa queda vacía después de captura
-				if (limpia) {
-					verdict = awardPoints(session, player.team, RULES.caidaYLimpiaPoints, "caida_y_limpia");
-				} else {
-					verdict = awardPoints(session, player.team, RULES.caidaPoints, "caida");
-				}
+			// Asignar puntos por caída: 1 perro = 2 puntos
+			const limpia = session.table.length === selectedCards.length; // Mesa queda vacía después de captura
+			if (limpia) {
+				verdict = awardPoints(session, player.team, RULES.caidaYLimpiaPoints, "caida_y_limpia");
+			} else {
+				verdict = awardPoints(session, player.team, RULES.caidaPoints, "caida");
 			}
 		}
 		
