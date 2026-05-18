@@ -1,7 +1,45 @@
+/* ═══════════════════════════════════════════
+   TOAST NOTIFICATIONS
+═══════════════════════════════════════════ */
+(function() {
+  const s = document.createElement('style');
+  s.textContent = `
+    .toast-container { position:fixed;top:1.5rem;right:1.5rem;z-index:9999;display:flex;flex-direction:column;gap:.75rem;pointer-events:none; }
+    .toast { pointer-events:auto;min-width:280px;max-width:400px;padding:.9rem 1.1rem;border-radius:12px;font-family:'Outfit',sans-serif;font-size:.88rem;line-height:1.4;color:#f0f0f0;background:rgba(18,18,28,.92);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.08);box-shadow:0 12px 40px rgba(0,0,0,.5);display:flex;align-items:flex-start;gap:.65rem;transform:translateX(120%);opacity:0;animation:ti .45s cubic-bezier(.16,1,.3,1) forwards;cursor:pointer;position:relative; }
+    .toast:hover{background:rgba(24,24,36,.95)} .toast.out{animation:to .35s cubic-bezier(.55,0,1,.45) forwards}
+    .toast-icon{flex-shrink:0;width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+    .toast-body{flex:1;display:flex;flex-direction:column;gap:.1rem} .toast-title{font-weight:600;font-size:.82rem} .toast-msg{color:rgba(255,255,255,.6);font-size:.82rem;font-weight:300}
+    .toast-bar{position:absolute;bottom:0;left:0;height:2px;border-radius:0 0 12px 12px;animation:tb var(--d) linear forwards}
+    .toast.t-ok .toast-icon{background:rgba(78,205,196,.15);color:#4ecdc4} .toast.t-ok .toast-title{color:#4ecdc4} .toast.t-ok .toast-bar{background:#4ecdc4}
+    .toast.t-err .toast-icon{background:rgba(255,107,107,.15);color:#ff6b6b} .toast.t-err .toast-title{color:#ff6b6b} .toast.t-err .toast-bar{background:#ff6b6b}
+    .toast.t-warn .toast-icon{background:rgba(255,190,70,.15);color:#ffbe46} .toast.t-warn .toast-title{color:#ffbe46} .toast.t-warn .toast-bar{background:#ffbe46}
+    .toast.t-info .toast-icon{background:rgba(116,143,252,.15);color:#748ffc} .toast.t-info .toast-title{color:#748ffc} .toast.t-info .toast-bar{background:#748ffc}
+    .toast.t-game .toast-icon{background:rgba(78,205,196,.15);color:#4ecdc4;font-size:15px} .toast.t-game .toast-title{color:#4ecdc4} .toast.t-game .toast-bar{background:#4ecdc4}
+    @keyframes ti{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}
+    @keyframes to{from{transform:translateX(0);opacity:1}to{transform:translateX(120%);opacity:0}}
+    @keyframes tb{from{width:100%}to{width:0%}}
+  `;
+  document.head.appendChild(s);
+  const c=document.createElement('div');c.className='toast-container';document.body.appendChild(c);
+})();
+ 
+const _TI={ok:'✓',err:'✕',info:'i',warn:'!',game:'♠'};
+const _TT={ok:'Éxito',err:'Error',info:'Info',warn:'Atención',game:'Partida'};
+ 
+function showToast(msg,type='info',dur=4000){
+  const c=document.querySelector('.toast-container');if(!c)return;
+  const t=document.createElement('div');t.className=`toast t-${type}`;t.style.setProperty('--d',dur+'ms');
+  t.innerHTML=`<div class="toast-icon">${_TI[type]||'i'}</div><div class="toast-body"><span class="toast-title">${_TT[type]||'Info'}</span><span class="toast-msg">${msg}</span></div><div class="toast-bar"></div>`;
+  t.onclick=()=>_dismiss(t);c.appendChild(t);
+  const all=c.querySelectorAll('.toast:not(.out)');if(all.length>5)_dismiss(all[0]);
+  setTimeout(()=>_dismiss(t),dur);
+}
+function _dismiss(t){if(!t||t.classList.contains('out'))return;t.classList.add('out');setTimeout(()=>t.remove(),350);}
+
 const socket = io("http://localhost:3000");
 // Notificación de sala expirada
 socket.on("sala_expirada", (data) => {
-  alert(data.mensaje);
+  showToast(data.mensaje, 'warn', 5000);
   // Si el usuario estaba en esa sala, limpiar y volver al lobby
   if (currentSessionId === data.sessionId) {
     localStorage.removeItem("currentSessionId");
@@ -64,7 +102,7 @@ if (loginBtn) {
     const password = document.getElementById("loginPassword").value.trim();
 
     if (!username || !password) {
-      alert("Ingrese usuario y contraseña");
+      showToast("Ingrese usuario y contraseña", "warn");
       return;
     }
 
@@ -102,7 +140,7 @@ if (registerBtn) {
     const password = document.getElementById("registerPassword").value.trim();
 
     if (!username || !password) {
-      alert("Ingrese usuario y contraseña");
+      showToast("Ingrese usuario y contraseña", "warn");
       return;
     }
 
@@ -111,7 +149,7 @@ if (registerBtn) {
 }
 
 socket.on("registro_exitoso", () => {
-  alert("Usuario registrado correctamente");
+  showToast("Usuario registrado correctamente", "ok");
   window.location.href = "login.html";
 });
 
@@ -135,7 +173,7 @@ socket.on("disconnect", () => {
 });
 
 socket.on("error_notificacion", (message) => {
-  alert(message);
+  showToast(message, "err");
 });
 
 /* =========================
@@ -161,7 +199,7 @@ if (rechargeBtn) {
     const monto = Number(document.getElementById("rechargeInput").value);
 
     if (!monto || monto <= 0) {
-      alert("Ingrese un monto válido");
+      showToast("Ingrese un monto válido", "warn");
       return;
     }
 
@@ -180,7 +218,7 @@ socket.on("saldo_recargado", (data) => {
     balanceText.textContent = `$${Number(data.nuevoSaldo).toFixed(2)}`;
   }
 
-  alert("Saldo recargado correctamente");
+  showToast("Saldo recargado correctamente", "ok");
 });
 
 if (createRoomBtn) {
@@ -188,7 +226,7 @@ if (createRoomBtn) {
     const monto = Number(document.getElementById("betInput").value);
 
     if (!monto || monto <= 0) {
-      alert("Ingrese una apuesta válida");
+      showToast("Ingrese una apuesta válida", "warn");
       return;
     }
 
@@ -210,7 +248,7 @@ socket.on("partida_creada", (data) => {
   if (roomCode) roomCode.textContent = data.sessionId;
   if (roomBox) roomBox.classList.remove("hidden");
 
-  alert(data.mensaje);
+  showToast(data.mensaje, "game", 5000);
 });
 
 socket.on("nueva_sala_disponible", (room) => {
@@ -246,7 +284,7 @@ if (joinRoomBtn) {
     const sessionId = document.getElementById("joinCodeInput").value.trim();
 
     if (!sessionId) {
-      alert("Ingrese el código de la sala");
+      showToast("Ingrese el código de la sala", "warn");
       return;
     }
 
@@ -267,7 +305,7 @@ socket.on("unido_a_sala", (data) => {
   currentSessionId = data.sessionId;
   localStorage.setItem("currentSessionId", data.sessionId);
   // Espera a que se inicie la partida para ir a game.html
-  alert(data.mensaje);
+  showToast(data.mensaje, "game");
 });
 
 socket.on("juego_iniciado", (data) => {
@@ -275,11 +313,11 @@ socket.on("juego_iniciado", (data) => {
   localStorage.setItem("currentSessionId", data.sessionId);
   localStorage.removeItem("lastGameState");
 
-  alert(data.mensaje);
+  showToast(data.mensaje, "game", 3000);
 
   setTimeout(() => {
     window.location.href = "game.html";
-  }, 800);
+  }, 1200);
 });
 
 // ═════════════════════════════════════════════════════════════════
@@ -361,7 +399,7 @@ socket.on("sesion_cerrada", (data) => {
   localStorage.removeItem("currentSessionId");
   localStorage.removeItem("lastGameState");
   
-  alert(`La partida ha finalizado\n${data.razón}\n${data.mensaje}`);
+  showToast(`La partida ha finalizado — ${data.razón}`, "err", 6000);
   
   // Redirigir al lobby
   setTimeout(() => {
@@ -506,7 +544,7 @@ socket.on("evento_motor", (event) => {
   }
 
   if (event.action === "ERROR") {
-    alert(event.message);
+    showToast(event.message, "err");
   }
 });
 
@@ -922,17 +960,17 @@ if (playCardBtn) {
     console.log("BOTÓN JUGAR PRESIONADO");
 
     if (!currentUser) {
-      alert("No hay usuario autenticado");
+      showToast("No hay usuario autenticado", "err");
       return;
     }
 
     if (!currentSessionId) {
-      alert("No hay partida activa");
+      showToast("No hay partida activa", "err");
       return;
     }
 
     if (!selectedCard) {
-      alert("Selecciona una carta de tu mano");
+      showToast("Selecciona una carta de tu mano", "warn");
       return;
     }
 
@@ -940,7 +978,7 @@ if (playCardBtn) {
     const validation = validateCapture(selectedCard, selectedCaptureCards);
     
     if (!validation.isValid) {
-      alert(`❌ ${validation.message}`);
+      showToast(`❌ ${validation.message}`, "err");
       return;
     }
 
