@@ -2,72 +2,282 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lobby - Juego 40</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #08080c;
+      --surface: rgba(255,255,255,0.025);
+      --surface-hover: rgba(255,255,255,0.045);
+      --border: rgba(255,255,255,0.06);
+      --border-hover: rgba(255,255,255,0.12);
+      --text: #eee;
+      --text-dim: rgba(255,255,255,0.45);
+      --text-muted: rgba(255,255,255,0.22);
+      --gold: #c9a84c;
+      --gold-dim: rgba(201,168,76,0.18);
+      --gold-glow: rgba(201,168,76,0.06);
+      --teal: #4ecdc4;
+      --teal-dim: rgba(78,205,196,0.12);
+      --danger: #e05555;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Navbar ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 2.5rem; height: 60px;
+      background: rgba(8,8,12,0.8); backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-brand { font-family: 'Bebas Neue', sans-serif; font-size: 1.35rem; letter-spacing: 0.14em; }
+    .nav-right { display: flex; align-items: center; gap: 0.75rem; }
+
+    .chip {
+      display: flex; align-items: center; gap: 0.45rem;
+      padding: 0.35rem 0.85rem; border-radius: 50px;
+      font-size: 0.82rem; font-weight: 500;
+    }
+
+    .chip-balance { background: var(--gold-dim); border: 1px solid rgba(201,168,76,0.22); color: var(--gold); }
+    .chip-balance .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--gold); }
+    .chip-user { background: var(--surface); border: 1px solid var(--border); color: var(--text-dim); }
+
+    .btn-logout {
+      background: none; border: none; color: var(--text-muted);
+      font-family: 'Outfit', sans-serif; font-size: 0.78rem;
+      cursor: pointer; padding: 0.35rem 0.6rem; border-radius: 6px; transition: all 0.2s;
+    }
+    .btn-logout:hover { color: var(--danger); background: rgba(224,85,85,0.08); }
+
+    /* ── Page ── */
+    .page { max-width: 960px; margin: 0 auto; padding: 90px 2rem 4rem; }
+
+    /* ── Hero ── */
+    .hero { text-align: center; margin-bottom: 3rem; }
+
+    .hero-icon {
+      width: 68px; height: 96px; margin: 0 auto 1.25rem;
+      background: linear-gradient(160deg, rgba(255,255,255,0.06), rgba(255,255,255,0.015));
+      border: 1px solid var(--border); border-radius: 10px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.35); animation: float 5s ease-in-out infinite;
+    }
+
+    .hero-icon .r { font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem; line-height: 1; }
+    .hero-icon .s { font-size: 1.4rem; opacity: 0.5; line-height: 1; }
+
+    @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+
+    .hero h1 { font-family: 'Bebas Neue', sans-serif; font-size: 1.65rem; letter-spacing: 0.08em; margin-bottom: 0.3rem; }
+    .hero p { font-size: 0.84rem; color: var(--text-dim); font-weight: 300; max-width: 320px; margin: 0 auto; line-height: 1.5; }
+
+    /* ── Grid ── */
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 1.6rem 1.4rem;
+      transition: all 0.3s; display: flex; flex-direction: column;
+    }
+
+    .card:hover { background: var(--surface-hover); border-color: var(--border-hover); }
+
+    .card-label {
+      font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.14em;
+      color: var(--text-muted); margin-bottom: 0.6rem; font-weight: 500;
+    }
+
+    .card h3 {
+      font-family: 'Bebas Neue', sans-serif; font-size: 1.15rem;
+      letter-spacing: 0.04em; margin-bottom: 0.25rem;
+    }
+
+    .card .desc {
+      font-size: 0.78rem; color: var(--text-muted); font-weight: 300;
+      line-height: 1.45; margin-bottom: auto; padding-bottom: 1.1rem;
+    }
+
+    .input-group { display: flex; gap: 0.6rem; }
+
+    .input-group input {
+      flex: 1; padding: 0.65rem 0.85rem;
+      background: rgba(255,255,255,0.035); border: 1px solid var(--border);
+      border-radius: 10px; color: var(--text); font-family: 'Outfit', sans-serif;
+      font-size: 0.84rem; outline: none; transition: all 0.25s;
+    }
+
+    .input-group input::placeholder { color: var(--text-muted); }
+    .input-group input:focus { border-color: var(--gold); background: var(--gold-glow); }
+
+    .btn {
+      padding: 0.65rem 1.2rem; border-radius: 10px;
+      font-family: 'Outfit', sans-serif; font-size: 0.8rem; font-weight: 500;
+      cursor: pointer; transition: all 0.25s; white-space: nowrap;
+    }
+
+    .btn-gold { background: none; border: 1px solid rgba(201,168,76,0.28); color: var(--gold); }
+    .btn-gold:hover { background: var(--gold-dim); border-color: var(--gold); }
+
+    .btn-teal { background: none; border: 1px solid rgba(78,205,196,0.22); color: var(--teal); }
+    .btn-teal:hover { background: var(--teal-dim); border-color: var(--teal); }
+
+    /* ── Room code box ── */
+    .room-code-box {
+      margin-top: 1rem; padding: 0.8rem;
+      background: var(--gold-glow); border: 1px solid rgba(201,168,76,0.12);
+      border-radius: 10px; text-align: center;
+    }
+
+    .room-code-box span { font-size: 0.72rem; color: var(--text-muted); display: block; margin-bottom: 0.15rem; }
+    .room-code-box strong {
+      font-family: 'Bebas Neue', sans-serif; font-size: 1.2rem;
+      color: var(--gold); letter-spacing: 0.15em; display: block;
+    }
+    .room-code-box p { font-size: 0.72rem; color: var(--text-muted); margin-top: 0.2rem; }
+    .hidden { display: none; }
+
+    /* ── Rooms list ── */
+    .rooms-list { display: flex; flex-direction: column; gap: 0.5rem; }
+
+    .rooms-list .empty-message {
+      text-align: center; color: var(--text-muted);
+      font-size: 0.8rem; padding: 1.5rem 0; font-weight: 300;
+    }
+
+    .rooms-list .room-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.7rem 0.9rem; background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border); border-radius: 10px; transition: all 0.2s;
+    }
+
+    .rooms-list .room-item:hover { border-color: rgba(201,168,76,0.2); background: rgba(255,255,255,0.035); }
+    .rooms-list .room-item strong { font-size: 0.72rem; color: var(--text-muted); font-weight: 400; }
+    .rooms-list .room-item p { font-family: 'Bebas Neue', sans-serif; font-size: 0.9rem; letter-spacing: 0.06em; margin: 0.1rem 0; }
+    .rooms-list .room-item span { font-size: 0.76rem; color: var(--gold); }
+
+    .rooms-list .room-item .primary-btn {
+      padding: 0.4rem 0.9rem; background: none;
+      border: 1px solid rgba(201,168,76,0.25); border-radius: 8px;
+      color: var(--gold); font-family: 'Outfit', sans-serif;
+      font-size: 0.76rem; font-weight: 500; cursor: pointer; transition: all 0.2s;
+    }
+    .rooms-list .room-item .primary-btn:hover { background: var(--gold-dim); }
+
+    /* ── Ambient ── */
+    .glow { position: fixed; border-radius: 50%; filter: blur(150px); pointer-events: none; z-index: -1; }
+    .glow-a { width: 380px; height: 380px; background: rgba(201,168,76,0.02); top: -8%; right: 18%; }
+    .glow-b { width: 280px; height: 280px; background: rgba(78,205,196,0.015); bottom: 8%; left: 10%; }
+
+    @media (max-width: 700px) {
+      nav { padding: 0 1.25rem; }
+      .page { padding: 80px 1rem 3rem; }
+      .grid { grid-template-columns: 1fr; }
+      .chip-user span:last-child { display: none; }
+    }
+  </style>
 </head>
 <body>
 
-  <button id="logoutBtn" class="danger-btn" style="position:absolute;top:18px;right:18px;z-index:10;">Cerrar sesión</button>
-  <main class="app">
+  <div class="glow glow-a"></div>
+  <div class="glow glow-b"></div>
 
-    <header class="top-bar">
-      <div>
-        <h1>Juego de Cartas 40</h1>
-        <p>Panel principal</p>
+  <!-- Navbar -->
+  <nav>
+    <div class="nav-brand">JUEGO 40</div>
+    <div class="nav-right">
+      <div class="chip chip-balance">
+        <span class="dot"></span>
+        <span id="balanceText">$0.00</span>
       </div>
-
-      <section class="user-panel">
-        <span class="status-dot"></span>
+      <div class="chip chip-user">
+        <span>♠</span>
         <span id="usernameText">Jugador</span>
-        <strong id="balanceText">$0.00</strong>
-      </section>
-    </header>
+      </div>
+      <button id="logoutBtn" class="btn-logout">Salir</button>
+    </div>
+  </nav>
 
-    <section class="lobby-view">
-      <div class="lobby-card">
+  <!-- Page -->
+  <main class="page">
 
-        <h2>Opciones de partida</h2>
+    <div class="hero">
+      <div class="hero-icon">
+        <span class="r">A</span>
+        <span class="s">♠</span>
+      </div>
+      <h1>Mesa de Juego</h1>
+      <p>Crea una sala, invita amigos y apuesta con estrategia.</p>
+    </div>
 
-        <div class="lobby-actions">
-          <input id="rechargeInput" type="number" placeholder="Monto a recargar">
-          <button id="rechargeBtn" class="secondary-btn">Recargar saldo</button>
-        </div>
+    <div class="grid">
 
-        <hr>
-
+      <!-- Crear sala -->
+      <div class="card">
+        <div class="card-label">Nueva partida</div>
         <h3>Crear sala</h3>
-        <div class="lobby-actions">
-          <input id="betInput" type="number" placeholder="Monto de apuesta">
-          <button id="createRoomBtn" class="primary-btn">Crear sala</button>
+        <p class="desc">Define el monto de apuesta y comparte el código.</p>
+        <div class="input-group">
+          <input id="betInput" type="number" placeholder="$ Apuesta">
+          <button id="createRoomBtn" class="btn btn-gold">Crear</button>
         </div>
-
         <div id="createdRoomBox" class="room-code-box hidden">
           <span>Código de sala generado:</span>
           <strong id="createdRoomCode"></strong>
           <p>Comparte este código con otro jugador para que se una.</p>
         </div>
+      </div>
 
-        <hr>
-
+      <!-- Unirse -->
+      <div class="card">
+        <div class="card-label">Partida existente</div>
         <h3>Unirse a sala</h3>
-        <div class="lobby-actions">
+        <p class="desc">Ingresa el código para entrar a una partida.</p>
+        <div class="input-group">
           <input id="joinCodeInput" type="text" placeholder="Código de sala">
-          <button id="joinRoomBtn" class="primary-btn">Unirse</button>
+          <button id="joinRoomBtn" class="btn btn-teal">Unirse</button>
         </div>
+      </div>
 
-        <hr>
+      <!-- Recargar -->
+      <div class="card">
+        <div class="card-label">Tu cuenta</div>
+        <h3>Recargar saldo</h3>
+        <p class="desc">Añade fondos para apostar en las partidas.</p>
+        <div class="input-group">
+          <input id="rechargeInput" type="number" placeholder="$ Monto">
+          <button id="rechargeBtn" class="btn btn-gold">Recargar</button>
+        </div>
+      </div>
 
+      <!-- Salas disponibles -->
+      <div class="card">
+        <div class="card-label">En vivo</div>
         <h3>Salas disponibles</h3>
         <div id="roomsList" class="rooms-list">
           <p class="empty-message">No hay salas disponibles.</p>
         </div>
-
       </div>
-    </section>
+
+    </div>
 
   </main>
 
-  <script src="http://localhost:3000/socket.io/socket.io.js"></script>
+  <span id="statusText" style="display:none;"></span>
+
+  <script src="/socket.io/socket.io.js"></script>
   <script src="socket-client.js"></script>
 
 </body>
