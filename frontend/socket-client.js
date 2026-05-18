@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════
    TOAST NOTIFICATIONS
 ═══════════════════════════════════════════ */
-(function() {
+(function () {
   const s = document.createElement('style');
   s.textContent = `
     .toast-container { position:fixed;top:1.5rem;right:1.5rem;z-index:9999;display:flex;flex-direction:column;gap:.75rem;pointer-events:none; }
@@ -20,21 +20,21 @@
     @keyframes tb{from{width:100%}to{width:0%}}
   `;
   document.head.appendChild(s);
-  const c=document.createElement('div');c.className='toast-container';document.body.appendChild(c);
+  const c = document.createElement('div'); c.className = 'toast-container'; document.body.appendChild(c);
 })();
- 
-const _TI={ok:'✓',err:'✕',info:'i',warn:'!',game:'♠'};
-const _TT={ok:'Éxito',err:'Error',info:'Info',warn:'Atención',game:'Partida'};
- 
-function showToast(msg,type='info',dur=4000){
-  const c=document.querySelector('.toast-container');if(!c)return;
-  const t=document.createElement('div');t.className=`toast t-${type}`;t.style.setProperty('--d',dur+'ms');
-  t.innerHTML=`<div class="toast-icon">${_TI[type]||'i'}</div><div class="toast-body"><span class="toast-title">${_TT[type]||'Info'}</span><span class="toast-msg">${msg}</span></div><div class="toast-bar"></div>`;
-  t.onclick=()=>_dismiss(t);c.appendChild(t);
-  const all=c.querySelectorAll('.toast:not(.out)');if(all.length>5)_dismiss(all[0]);
-  setTimeout(()=>_dismiss(t),dur);
+
+const _TI = { ok: '✓', err: '✕', info: 'i', warn: '!', game: '♠' };
+const _TT = { ok: 'Éxito', err: 'Error', info: 'Info', warn: 'Atención', game: 'Partida' };
+
+function showToast(msg, type = 'info', dur = 4000) {
+  const c = document.querySelector('.toast-container'); if (!c) return;
+  const t = document.createElement('div'); t.className = `toast t-${type}`; t.style.setProperty('--d', dur + 'ms');
+  t.innerHTML = `<div class="toast-icon">${_TI[type] || 'i'}</div><div class="toast-body"><span class="toast-title">${_TT[type] || 'Info'}</span><span class="toast-msg">${msg}</span></div><div class="toast-bar"></div>`;
+  t.onclick = () => _dismiss(t); c.appendChild(t);
+  const all = c.querySelectorAll('.toast:not(.out)'); if (all.length > 5) _dismiss(all[0]);
+  setTimeout(() => _dismiss(t), dur);
 }
-function _dismiss(t){if(!t||t.classList.contains('out'))return;t.classList.add('out');setTimeout(()=>t.remove(),350);}
+function _dismiss(t) { if (!t || t.classList.contains('out')) return; t.classList.add('out'); setTimeout(() => t.remove(), 350); }
 
 const socket = io("http://localhost:3000");
 // Notificación de sala expirada
@@ -107,8 +107,8 @@ if (loginBtn) {
     }
 
     // Enviar sessionId si existe (para reconectar a partida en progreso)
-    socket.emit("login_usuario", { 
-      username, 
+    socket.emit("login_usuario", {
+      username,
       password,
       sessionId: currentSessionId || null
     });
@@ -118,13 +118,13 @@ if (loginBtn) {
 socket.on("login_exitoso", (data) => {
   currentUser = data;
   sessionStorage.setItem("currentUser", JSON.stringify(data));
-  
+
   // Si tenía una sessionId guardada, intentar reconectar a esa sesión
   if (currentSessionId) {
     // Enviar login con sessionId para reconectar
     console.log("Intentando reconectar a sesión:", currentSessionId);
   }
-  
+
   window.location.href = "lobby.html";
 });
 
@@ -159,7 +159,7 @@ socket.on("registro_exitoso", () => {
 
 socket.on("connect", () => {
   if (statusText) statusText.textContent = "Conectado";
-  
+
   // Identificarse con el servidor al conectar/reconectar
   // Sin esto, el servidor no sabe qué socket pertenece a qué jugador
   if (currentSessionId && currentUser) {
@@ -367,7 +367,7 @@ socket.on("juego_iniciado", (data) => {
  */
 socket.on("jugador_desconectado", (data) => {
   console.warn(`⚠️ [DESCONEXIÓN] ${data.mensaje}`);
-  
+
   const notification = document.createElement("div");
   notification.className = "disconnection-warning";
   notification.innerHTML = `
@@ -375,17 +375,17 @@ socket.on("jugador_desconectado", (data) => {
     <p>${data.mensaje}</p>
     <p>Esperando reconexión... <span id="countdownTimer">300</span>s</p>
   `;
-  
+
   document.body.appendChild(notification);
-  
+
   // Mostrar countdown
   let timeLeft = 300;
   const timerEl = document.getElementById("countdownTimer");
-  
+
   disconnectionCountdown = setInterval(() => {
     timeLeft--;
     if (timerEl) timerEl.textContent = timeLeft;
-    
+
     if (timeLeft <= 0) {
       clearInterval(disconnectionCountdown);
     }
@@ -397,25 +397,25 @@ socket.on("jugador_desconectado", (data) => {
  */
 socket.on("jugador_reconectado", (data) => {
   console.log(`✅ [RECONEXIÓN] ${data.mensaje}`);
-  
+
   // Limpiar countdown
   if (disconnectionCountdown) {
     clearInterval(disconnectionCountdown);
   }
-  
+
   // Remover notificaciones de desconexión
   const warnings = document.querySelectorAll(".disconnection-warning");
   warnings.forEach(w => {
     w.style.animation = "slide-down 0.4s ease-out reverse";
     setTimeout(() => w.remove(), 400);
   });
-  
+
   // Mostrar notificación de éxito
   const successNotif = document.createElement("div");
   successNotif.className = "reconnection-success";
   successNotif.textContent = "✅ Jugador reconectado";
   document.body.appendChild(successNotif);
-  
+
   setTimeout(() => {
     successNotif.style.animation = "slide-down 0.4s ease-out reverse";
     setTimeout(() => successNotif.remove(), 400);
@@ -427,18 +427,18 @@ socket.on("jugador_reconectado", (data) => {
  */
 socket.on("sesion_cerrada", (data) => {
   console.error(`🔴 [SESIÓN CERRADA] ${data.razón}`);
-  
+
   // Limpiar countdown
   if (disconnectionCountdown) {
     clearInterval(disconnectionCountdown);
   }
-  
+
   // Limpiar datos de sesión
   sessionStorage.removeItem("currentSessionId");
   sessionStorage.removeItem("lastGameState");
-  
+
   showToast(`La partida ha finalizado — ${data.razón}`, "err", 6000);
-  
+
   // Redirigir al lobby
   setTimeout(() => {
     window.location.href = "lobby.html";
@@ -500,14 +500,14 @@ function showVictoryModal(message, verdict) {
   // Crear overlay
   const overlay = document.createElement("div");
   overlay.className = "victory-overlay";
-  
+
   // Crear modal
   const modal = document.createElement("div");
   modal.className = `victory-modal team-${verdict?.winnerTeam}`;
-  
+
   const teamColor = verdict?.winnerTeam === "A" ? "🔵 Equipo A" : "🔴 Equipo B";
   const teamEmoji = verdict?.winnerTeam === "A" ? "🔵" : "🔴";
-  
+
   modal.innerHTML = `
     <div class="victory-header">
       <h1>${teamEmoji} ¡VICTORIA! ${teamEmoji}</h1>
@@ -549,10 +549,10 @@ function showVictoryModal(message, verdict) {
       Volver al Lobby
     </button>
   `;
-  
+
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
-  
+
   // Animación de entrada
   setTimeout(() => {
     overlay.classList.add("show");
@@ -578,9 +578,9 @@ socket.on("evento_motor", (event) => {
   if (event.action === "FINAL") {
     // Mostrar mensaje de victoria mejorado
     const verdict = event.verdict;
-    const victoryMessage = verdict?.victoryMessage || 
+    const victoryMessage = verdict?.victoryMessage ||
       `Juego finalizado. Ganador: Equipo ${verdict?.winnerTeam}`;
-    
+
     // Crear modal elegante de victoria
     showVictoryModal(victoryMessage, verdict);
   }
@@ -629,7 +629,7 @@ function renderGameState(event) {
   // Verificar si es el turno del usuario
   const wasMyTurn = isMyTurn;
   isMyTurn = state.turnId === currentUser?.userId;
-  
+
   // Si es el turno del usuario AHORA, mostrar notificación
   if (isMyTurn && !wasMyTurn) {
     showTurnNotification();
@@ -638,13 +638,13 @@ function renderGameState(event) {
   if (potText) {
     potText.textContent = `$${Number(state.pot || 0).toFixed(2)}`;
   }
-  
+
   if (turnText) {
     const turnText_elem = document.getElementById("turnText");
     if (turnText_elem) {
       const turnTextContent = getTurnText(state.turnId, state.players || []);
       turnText_elem.textContent = turnTextContent;
-      
+
       // Agregar clase de animación si es mi turno
       if (isMyTurn) {
         turnText_elem.classList.add("turn-indicator");
@@ -652,12 +652,12 @@ function renderGameState(event) {
       }
     }
   }
-  
+
   // ACTUALIZAR CARTÓN Y PERROS CON ANIMACIÓN
   if (teamAScore) {
     const currentScore = state.teamScores?.A ?? 0;
     teamAScore.textContent = currentScore;
-    
+
     // Animar si cambió
     if (currentScore !== previousTeamStats.A.cartón) {
       teamAScore.classList.add("update-flash");
@@ -665,11 +665,11 @@ function renderGameState(event) {
       previousTeamStats.A.cartón = currentScore;
     }
   }
-  
+
   if (teamBScore) {
     const currentScore = state.teamScores?.B ?? 0;
     teamBScore.textContent = currentScore;
-    
+
     // Animar si cambió
     if (currentScore !== previousTeamStats.B.cartón) {
       teamBScore.classList.add("update-flash");
@@ -677,14 +677,14 @@ function renderGameState(event) {
       previousTeamStats.B.cartón = currentScore;
     }
   }
-  
+
   // ACTUALIZAR PERROS (puntos / 2)
   // Los perros son simplemente la representación de puntos dividido entre 2
   // 1 perro = 2 puntos
   if (teamAPerros) {
     const currentPerros = (state.teamScores?.A ?? 0) / 2;
     teamAPerros.textContent = currentPerros;
-    
+
     // Animar si cambió
     if (currentPerros !== previousTeamStats.A.perros) {
       teamAPerros.classList.add("update-flash");
@@ -692,11 +692,11 @@ function renderGameState(event) {
       previousTeamStats.A.perros = currentPerros;
     }
   }
-  
+
   if (teamBPerros) {
     const currentPerros = (state.teamScores?.B ?? 0) / 2;
     teamBPerros.textContent = currentPerros;
-    
+
     // Animar si cambió
     if (currentPerros !== previousTeamStats.B.perros) {
       teamBPerros.classList.add("update-flash");
@@ -704,7 +704,7 @@ function renderGameState(event) {
       previousTeamStats.B.perros = currentPerros;
     }
   }
-  
+
   if (deckCount) {
     deckCount.textContent = state.players
       ? Math.max(0, 40 - state.players.reduce((total, p) => total + p.handCount + p.capturedCount, 0) - state.table.length)
@@ -776,7 +776,7 @@ function getTurnText(turnId, players) {
 function showTurnNotification() {
   // Reproducir sonido
   try {
-    turnNotificationAudio.play().catch(() => {});
+    turnNotificationAudio.play().catch(() => { });
   } catch (e) {
     console.log("No se pudo reproducir sonido");
   }
@@ -793,11 +793,11 @@ function showTurnNotification() {
   const banner = document.createElement("div");
   banner.className = "your-turn-banner";
   banner.textContent = "🎮 ¡ES TU TURNO! Juega una carta";
-  
+
   const gameTable = document.querySelector(".game-table");
   if (gameTable) {
     gameTable.insertBefore(banner, gameTable.firstChild);
-    
+
     // Remover el banner después de 3 segundos
     setTimeout(() => {
       banner.style.animation = "turn-slide 0.4s ease-in reverse";
@@ -863,25 +863,25 @@ function getRankIndex(rank) {
 // Función para validar si una selección es una escalera válida (números)
 function isValidNumberEscalera(playedCard, selectedCards) {
   if (selectedCards.length === 0) return false;
-  
+
   const selectedRanks = selectedCards.map(c => c.rank);
   const playedIndex = getRankIndex(playedCard.rank);
-  
+
   // La carta jugada debe estar en la selección
   if (!selectedRanks.includes(playedCard.rank)) {
     return false;
   }
-  
+
   // Obtener índices ordenados
   const indices = selectedRanks.map(rank => getRankIndex(rank)).sort((a, b) => a - b);
-  
+
   // Verificar que sea continuo
   for (let i = 0; i < indices.length - 1; i++) {
     if (indices[i + 1] - indices[i] !== 1) {
       return false;
     }
   }
-  
+
   // Verificar que la carta jugada sea la más baja (punto de inicio)
   return indices[0] === playedIndex;
 }
@@ -889,26 +889,26 @@ function isValidNumberEscalera(playedCard, selectedCards) {
 // Función para validar si una selección es una escalera válida (figuras)
 function isValidFigureEscalera(playedCard, selectedCards) {
   if (selectedCards.length === 0) return false;
-  
+
   const figureValues = { 'J': 0, 'Q': 1, 'K': 2 };
   const selectedRanks = selectedCards.map(c => c.rank);
   const playedIndex = figureValues[playedCard.rank];
-  
+
   // Todas deben ser figuras
   if (!selectedRanks.every(rank => rank in figureValues)) {
     return false;
   }
-  
+
   // Obtener índices ordenados
   const indices = selectedRanks.map(rank => figureValues[rank]).sort((a, b) => a - b);
-  
+
   // Verificar que sea continuo
   for (let i = 0; i < indices.length - 1; i++) {
     if (indices[i + 1] - indices[i] !== 1) {
       return false;
     }
   }
-  
+
   // Verificar que la carta jugada sea la más baja
   return indices[0] === playedIndex;
 }
@@ -916,24 +916,24 @@ function isValidFigureEscalera(playedCard, selectedCards) {
 // Función para validar captura por suma
 function isValidSumCapture(playedCard, selectedCards) {
   if (selectedCards.length === 0) return false;
-  
+
   // No puede haber figuras en suma
   if (selectedCards.some(card => !isNumberRank(card.rank))) {
     return false;
   }
-  
+
   const sum = selectedCards.reduce((total, card) => total + (CARD_VALUES[card.rank] || 0), 0);
   const targetValue = CARD_VALUES[playedCard.rank] || 0;
-  
+
   return sum === targetValue;
 }
 
 // Función para validar si la selección es válida
 function isValidCaptureSelection(playedCard, selectedCards) {
   if (selectedCards.length === 0) return false;
-  
+
   const isFigure = !isNumberRank(playedCard.rank);
-  
+
   if (isFigure) {
     // Figuras: solo escalera
     return isValidFigureEscalera(playedCard, selectedCards);
@@ -962,7 +962,7 @@ function renderTableCards(cards) {
         selectedCaptureCards.push(card);
         element.classList.add("selected");
       }
-      
+
       // Actualizar indicador de suma
       updateCaptureSumIndicator();
     });
@@ -981,9 +981,9 @@ function updateCaptureSumIndicator() {
   if (selectedCaptureCards.length === 0 || !selectedCard) {
     return;
   }
-  
+
   const isFigure = !isNumberRank(selectedCard.rank);
-  
+
   if (isFigure) {
     // Figuras: validar escalera J-Q-K
     const isValid = isValidFigureEscalera(selectedCard, selectedCaptureCards);
@@ -993,7 +993,7 @@ function updateCaptureSumIndicator() {
     // Números: validar suma o escalera
     const sumCapture = isValidSumCapture(selectedCard, selectedCaptureCards);
     const escaleraCapture = isValidNumberEscalera(selectedCard, selectedCaptureCards);
-    
+
     if (sumCapture) {
       const sum = selectedCaptureCards.reduce((total, card) => total + (CARD_VALUES[card.rank] || 0), 0);
       console.log(`Suma: ${selectedCaptureCards.map(c => c.rank).join(' + ')} = ${sum} ✓`);
@@ -1140,54 +1140,54 @@ function validateCapture(playedCard, captureCards) {
   }
 
   const isFigure = !isNumberRank(playedCard.rank);
-  
+
   // FIGURAS (J, Q, K) - Solo escalera
   if (isFigure) {
     const isValid = isValidFigureEscalera(playedCard, captureCards);
     if (isValid) {
       const cartas = captureCards.map(c => c.rank).join('-');
-      return { 
-        isValid: true, 
-        message: `Captura escalera: ${cartas}`, 
-        type: "escalera_figure" 
+      return {
+        isValid: true,
+        message: `Captura escalera: ${cartas}`,
+        type: "escalera_figure"
       };
     } else {
-      return { 
-        isValid: false, 
-        message: `Escalera J-Q-K inválida. Cartas seleccionadas: ${captureCards.map(c => c.rank).join(',')}`, 
-        type: null 
+      return {
+        isValid: false,
+        message: `Escalera J-Q-K inválida. Cartas seleccionadas: ${captureCards.map(c => c.rank).join(',')}`,
+        type: null
       };
     }
   }
-  
+
   // NÚMEROS (A-7) - Escalera o Suma
   const isSumValid = isValidSumCapture(playedCard, captureCards);
   const isEscaleraValid = isValidNumberEscalera(playedCard, captureCards);
-  
+
   if (isEscaleraValid) {
     const cartas = captureCards.map(c => c.rank).join('-');
-    return { 
-      isValid: true, 
-      message: `Captura escalera: ${cartas}`, 
-      type: "escalera_number" 
+    return {
+      isValid: true,
+      message: `Captura escalera: ${cartas}`,
+      type: "escalera_number"
     };
   }
-  
+
   if (isSumValid) {
     const sum = captureCards.reduce((total, card) => total + (CARD_VALUES[card.rank] || 0), 0);
     const cardList = captureCards.map(c => c.rank).join("+");
-    return { 
-      isValid: true, 
-      message: `Captura por suma: ${cardList} = ${sum}`, 
-      type: "sum" 
+    return {
+      isValid: true,
+      message: `Captura por suma: ${cardList} = ${sum}`,
+      type: "sum"
     };
   }
-  
+
   // Captura inválida
-  return { 
-    isValid: false, 
-    message: `Captura inválida. Selecciona cartas que formen escalera desde el ${playedCard.rank}, o que sumen ${CARD_VALUES[playedCard.rank]}`, 
-    type: null 
+  return {
+    isValid: false,
+    message: `Captura inválida. Selecciona cartas que formen escalera desde el ${playedCard.rank}, o que sumen ${CARD_VALUES[playedCard.rank]}`,
+    type: null
   };
 }
 
@@ -1212,7 +1212,7 @@ if (playCardBtn) {
 
     // Validar la captura
     const validation = validateCapture(selectedCard, selectedCaptureCards);
-    
+
     if (!validation.isValid) {
       showToast(`❌ ${validation.message}`, "err");
       return;
@@ -1240,7 +1240,7 @@ if (playCardBtn) {
     }
 
     socket.emit("jugar_carta", jugada);
-    
+
     // Limpiar selección
     selectedCard = null;
     selectedCaptureCards = [];
@@ -1260,19 +1260,57 @@ if (clearSelectionBtn) {
   clearSelectionBtn.addEventListener("click", () => {
     selectedCard = null;
     selectedCaptureCards = [];
-    
+
     // Limpiar estilos
     document.querySelectorAll("#player1Cards .card").forEach(c => {
       c.classList.remove("selected");
     });
-    
+
     document.querySelectorAll("#tableCards .card").forEach(c => {
       c.classList.remove("selected");
     });
-    
+
     console.log("Selección limpiada");
   });
 }
+
+/* =========================
+   MONITOREO UDP
+========================= */
+
+const udpLatencyText = document.getElementById("udpLatencyText");
+const udpStatusDot = document.getElementById("udpStatusDot");
+
+if (page === "game.html" && currentUser && currentSessionId) {
+  setInterval(() => {
+    socket.emit("udp_ping_jugador", {
+      userId: currentUser.userId,
+      username: currentUser.username,
+      sessionId: currentSessionId
+    });
+  }, 3000);
+}
+
+socket.on("udp_estado_jugador", (data) => {
+  console.log("Estado UDP:", data);
+
+  if (udpLatencyText) {
+    udpLatencyText.textContent = `${data.latency} ms - ${data.quality}`;
+  }
+
+  if (udpStatusDot) {
+    if (data.quality === "buena") {
+      udpStatusDot.style.background = "#38d878";
+      udpStatusDot.style.boxShadow = "0 0 10px #38d878";
+    } else if (data.quality === "media") {
+      udpStatusDot.style.background = "#ffd166";
+      udpStatusDot.style.boxShadow = "0 0 10px #ffd166";
+    } else {
+      udpStatusDot.style.background = "#dc2626";
+      udpStatusDot.style.boxShadow = "0 0 10px #dc2626";
+    }
+  }
+});
 
 /* =========================
    FUNCIONES PARA CONSOLA
