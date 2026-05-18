@@ -678,10 +678,11 @@ function renderGameState(event) {
     }
   }
   
-  // ACTUALIZAR PERROS (caídas válidas)
-  // Los perros SOLO se incrementan cuando alguien hace una caída válida
+  // ACTUALIZAR PERROS (puntos / 2)
+  // Los perros son simplemente la representación de puntos dividido entre 2
+  // 1 perro = 2 puntos
   if (teamAPerros) {
-    const currentPerros = state.teamCaidaCount?.A ?? 0;
+    const currentPerros = (state.teamScores?.A ?? 0) / 2;
     teamAPerros.textContent = currentPerros;
     
     // Animar si cambió
@@ -693,7 +694,7 @@ function renderGameState(event) {
   }
   
   if (teamBPerros) {
-    const currentPerros = state.teamCaidaCount?.B ?? 0;
+    const currentPerros = (state.teamScores?.B ?? 0) / 2;
     teamBPerros.textContent = currentPerros;
     
     // Animar si cambió
