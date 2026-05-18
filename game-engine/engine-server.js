@@ -52,6 +52,16 @@ function listPlayers(session) {
 }
 
 function getState(session) {
+	// Agrupar cartas capturadas por equipo
+	const teamCapturedCards = { A: [], B: [] };
+	for (const id of session.order) {
+		const player = session.players.get(id);
+		const team = player.team;
+		if (player.captured && player.captured.length > 0) {
+			teamCapturedCards[team].push(...player.captured);
+		}
+	}
+
 	return {
 		started: session.started,
 		round: session.round,
@@ -61,6 +71,7 @@ function getState(session) {
 		table: session.table,
 		teamScores: session.teamScores,
 		teamCapturedCount: session.teamCapturedCount,
+		teamCapturedCards: teamCapturedCards,
 		pot: session.betting.pot,
 	};
 }
@@ -199,13 +210,66 @@ function hasSubsetSum(values, target) {
 	return search(0, target);
 }
 
-function hasAnyCapture(session, playedCard) {
-	if (session.table.some((tableCard) => tableCard.rank === playedCard.rank)) {
-		return true;
+function hasPossibleEscalera(playedCard, tableCards) {
+	// Verificar si existe una escalera posible desde la carta jugada en adelante
+	const playedIndex = rankIndex(playedCard.rank);
+	const tableRanks = tableCards.map(card => card.rank);
+	
+	// Necesita al menos contener la carta jugada
+	if (!tableRanks.includes(playedCard.rank)) {
+		return false;
 	}
-	const target = rankValue(playedCard.rank);
-	const values = session.table.map((card) => rankValue(card.rank));
-	return hasSubsetSum(values, target);
+	
+	// Intentar encontrar una escalera desde la carta jugada
+	for (let highestIdx = playedIndex; highestIdx < RANKS.length; highestIdx++) {
+		let hasAll = true;
+		for (let idx = playedIndex; idx <= highestIdx; idx++) {
+			if (!tableRanks.includes(RANKS[idx])) {
+				hasAll = false;
+				break;
+			}
+		}
+		if (hasAll) {
+			return true; // Encontrada una escalera válida
+		}
+	}
+	return false;
+}
+
+function hasPossibleFigureEscalera(playedCard, tableCards) {
+	// Para figuras (J, Q, K)
+	const figures = { "J": 0, "Q": 1, "K": 2 };
+	const playedIndex = figures[playedCard.rank];
+	const tableRanks = new Set(tableCards.map(card => card.rank));
+	
+	// Verificar si hay una escalera desde la carta jugada en adelante
+	const figureRanks = ["J", "Q", "K"];
+	for (let i = playedIndex; i < figureRanks.length; i++) {
+		if (!tableRanks.has(figureRanks[i])) {
+			return false;
+		}
+	}
+	return true;
+}
+
+function hasAnyCapture(session, playedCard) {
+	const isFigure = !isNumberRank(playedCard.rank);
+	
+	if (isFigure) {
+		// Para figuras (J, Q, K): solo escalera
+		return hasPossibleFigureEscalera(playedCard, session.table);
+	} else {
+		// Para números: puede ser escalera o suma
+		// Verificar escalera
+		if (hasPossibleEscalera(playedCard, session.table)) {
+			return true;
+		}
+		// Verificar suma (solo con números)
+		const target = rankValue(playedCard.rank);
+		const numberCards = session.table.filter(card => isNumberRank(card.rank));
+		const values = numberCards.map((card) => rankValue(card.rank));
+		return hasSubsetSum(values, target);
+	}
 }
 
 function validateEscaleraSelection(playedCard, selectedCards) {
@@ -235,6 +299,83 @@ function validateEscaleraSelection(playedCard, selectedCards) {
 	}
 }
 
+// Nueva función para validar escaleras para números (A-7)
+function isNumberRank(rank) {
+	return rankIndex(rank) < 7; // A,2,3,4,5,6,7 son índices 0-6, J,Q,K son 7,8,9
+}
+
+// Función para validar escalera de números
+function validateNumberEscalera(playedCard, selectedCards) {
+	const selectedRanks = selectedCards.map((card) => card.rank);
+	const playedIndex = rankIndex(playedCard.rank);
+	
+	// Verificar que todos sean números
+	if (!selectedRanks.every(rank => isNumberRank(rank))) {
+		throw new Error("Escalera must contain only number ranks");
+	}
+	
+	// Verificar sin duplicados
+	const uniqueRanks = new Set(selectedRanks);
+	if (uniqueRanks.size !== selectedRanks.length) {
+		throw new Error("Escalera cannot repeat ranks");
+	}
+	
+	// La carta jugada debe estar en las seleccionadas
+	if (!selectedRanks.includes(playedCard.rank)) {
+		throw new Error("Played card must be in the escalera");
+	}
+	
+	// Encontrar la secuencia continua que incluya la carta jugada
+	const sortedIndices = selectedRanks.map(rank => rankIndex(rank)).sort((a, b) => a - b);
+	
+	// Verificar que sea una secuencia continua
+	for (let i = 0; i < sortedIndices.length - 1; i++) {
+		if (sortedIndices[i + 1] - sortedIndices[i] !== 1) {
+			throw new Error("Escalera must be consecutive without gaps");
+		}
+	}
+	
+	// Verificar que la carta jugada sea la más baja de la secuencia (no incluir menores)
+	const lowestIndex = Math.min(...sortedIndices);
+	if (playedIndex > lowestIndex) {
+		throw new Error("Can only capture from played card onwards");
+	}
+}
+
+// Nueva función para validar J,Q,K escalera
+function validateFigureEscalera(playedCard, selectedCards) {
+	const figures = { "J": 0, "Q": 1, "K": 2 };
+	const selectedRanks = selectedCards.map((card) => card.rank);
+	const playedIndex = figures[playedCard.rank];
+	
+	// Verificar que todos sean figuras
+	if (!selectedRanks.every(rank => rank in figures)) {
+		throw new Error("Figure escalera must contain only J, Q, K");
+	}
+	
+	// Verificar sin duplicados
+	const uniqueRanks = new Set(selectedRanks);
+	if (uniqueRanks.size !== selectedRanks.length) {
+		throw new Error("Escalera cannot repeat ranks");
+	}
+	
+	// Convertir a índices
+	const selectedIndices = selectedRanks.map(rank => figures[rank]).sort((a, b) => a - b);
+	
+	// Verificar continuidad desde la carta jugada en adelante
+	for (let i = 0; i < selectedIndices.length - 1; i++) {
+		if (selectedIndices[i + 1] - selectedIndices[i] !== 1) {
+			throw new Error("Figure escalera must be consecutive (J-Q-K)");
+		}
+	}
+	
+	// Verificar que la carta jugada sea la más baja de la secuencia
+	const lowestIndex = selectedIndices[0];
+	if (playedIndex > lowestIndex) {
+		throw new Error("Can only capture figures from played card onwards");
+	}
+}
+
 function validateCaptureSelection(session, playedCard, selectedCards) {
 	if (selectedCards.length === 0) {
 		if (hasAnyCapture(session, playedCard)) {
@@ -251,19 +392,42 @@ function validateCaptureSelection(session, playedCard, selectedCards) {
 		}
 	}
 
-	// CAPTURA POR IGUALDAD (Escalera): La carta jugada es igual a una o más cartas de la mesa
-	const hasEqual = selectedCards.some((card) => card.rank === playedCard.rank);
-	if (hasEqual) {
-		validateEscaleraSelection(playedCard, selectedCards);
-		return { type: "equal" };
+	const playedRank = playedCard.rank;
+	const isFigure = !isNumberRank(playedRank); // J, Q, K
+	
+	// CASO 1: Figuras (J, Q, K) - Solo escalera
+	if (isFigure) {
+		validateFigureEscalera(playedCard, selectedCards);
+		return { type: "escalera_figure" };
 	}
-
-	// CAPTURA POR SUMA: Las cartas de la mesa suman exactamente el valor de la carta jugada
-	// Ej: Carta jugada = 7, Cartas mesa seleccionadas = [3, 4] → suma 7 = Captura exitosa
-	const total = selectedCards.reduce((sum, card) => sum + rankValue(card.rank), 0);
+	
+	// CASO 2: Números - Puede ser suma O escalera
+	const hasEqual = selectedCards.some((card) => card.rank === playedCard.rank);
+	
+	// CASO 2A: Captura por escalera (desde la carta jugada en adelante)
+	if (hasEqual) {
+		validateNumberEscalera(playedCard, selectedCards);
+		return { type: "escalera_number" };
+	}
+	
+	// CASO 2B: Captura por suma (números solamente)
+	const total = selectedCards.reduce((sum, card) => {
+		// Solo contar números en la suma, no figuras
+		if (isNumberRank(card.rank)) {
+			return sum + rankValue(card.rank);
+		}
+		return sum;
+	}, 0);
+	
 	if (total !== rankValue(playedCard.rank)) {
 		throw new Error("Sum capture does not match played card value");
 	}
+	
+	// Verificar que no haya figuras en una captura por suma
+	if (selectedCards.some(card => !isNumberRank(card.rank))) {
+		throw new Error("Cannot mix numbers and figures in sum capture");
+	}
+	
 	return { type: "sum" };
 }
 

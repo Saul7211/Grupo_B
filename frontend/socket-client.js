@@ -457,6 +457,10 @@ const teamAScore = document.getElementById("teamAScore");
 const teamBScore = document.getElementById("teamBScore");
 const teamAPerros = document.getElementById("teamAPerros");
 const teamBPerros = document.getElementById("teamBPerros");
+const cartonA = document.getElementById("cartonA");
+const cartonB = document.getElementById("cartonB");
+const cartonASuma = document.getElementById("cartonASuma");
+const cartonBSuma = document.getElementById("cartonBSuma");
 
 const player1Name = document.getElementById("player1Name");
 const player1Cards = document.getElementById("player1Cards");
@@ -705,6 +709,9 @@ function renderGameState(event) {
       : 0;
   }
 
+  // RENDERIZAR CARTÓN
+  renderCarton(state.teamCapturedCards || { A: [], B: [] });
+
   // Mostrar nombres, equipos y cartas correctamente
   if (state.players && event.jugadoresNombres) {
     // Mapear ids a nombres y equipos
@@ -840,6 +847,100 @@ function renderBackCards(container, count) {
   }
 }
 
+// Función para determinar si un rango es número o figura
+function isNumberRank(rank) {
+  return ['A', '2', '3', '4', '5', '6', '7'].includes(rank);
+}
+
+// Función para obtener el índice del rango
+function getRankIndex(rank) {
+  const ranks = ['A', '2', '3', '4', '5', '6', '7', 'J', 'Q', 'K'];
+  return ranks.indexOf(rank);
+}
+
+// Función para validar si una selección es una escalera válida (números)
+function isValidNumberEscalera(playedCard, selectedCards) {
+  if (selectedCards.length === 0) return false;
+  
+  const selectedRanks = selectedCards.map(c => c.rank);
+  const playedIndex = getRankIndex(playedCard.rank);
+  
+  // La carta jugada debe estar en la selección
+  if (!selectedRanks.includes(playedCard.rank)) {
+    return false;
+  }
+  
+  // Obtener índices ordenados
+  const indices = selectedRanks.map(rank => getRankIndex(rank)).sort((a, b) => a - b);
+  
+  // Verificar que sea continuo
+  for (let i = 0; i < indices.length - 1; i++) {
+    if (indices[i + 1] - indices[i] !== 1) {
+      return false;
+    }
+  }
+  
+  // Verificar que la carta jugada sea la más baja (punto de inicio)
+  return indices[0] === playedIndex;
+}
+
+// Función para validar si una selección es una escalera válida (figuras)
+function isValidFigureEscalera(playedCard, selectedCards) {
+  if (selectedCards.length === 0) return false;
+  
+  const figureValues = { 'J': 0, 'Q': 1, 'K': 2 };
+  const selectedRanks = selectedCards.map(c => c.rank);
+  const playedIndex = figureValues[playedCard.rank];
+  
+  // Todas deben ser figuras
+  if (!selectedRanks.every(rank => rank in figureValues)) {
+    return false;
+  }
+  
+  // Obtener índices ordenados
+  const indices = selectedRanks.map(rank => figureValues[rank]).sort((a, b) => a - b);
+  
+  // Verificar que sea continuo
+  for (let i = 0; i < indices.length - 1; i++) {
+    if (indices[i + 1] - indices[i] !== 1) {
+      return false;
+    }
+  }
+  
+  // Verificar que la carta jugada sea la más baja
+  return indices[0] === playedIndex;
+}
+
+// Función para validar captura por suma
+function isValidSumCapture(playedCard, selectedCards) {
+  if (selectedCards.length === 0) return false;
+  
+  // No puede haber figuras en suma
+  if (selectedCards.some(card => !isNumberRank(card.rank))) {
+    return false;
+  }
+  
+  const sum = selectedCards.reduce((total, card) => total + (CARD_VALUES[card.rank] || 0), 0);
+  const targetValue = CARD_VALUES[playedCard.rank] || 0;
+  
+  return sum === targetValue;
+}
+
+// Función para validar si la selección es válida
+function isValidCaptureSelection(playedCard, selectedCards) {
+  if (selectedCards.length === 0) return false;
+  
+  const isFigure = !isNumberRank(playedCard.rank);
+  
+  if (isFigure) {
+    // Figuras: solo escalera
+    return isValidFigureEscalera(playedCard, selectedCards);
+  } else {
+    // Números: escalera o suma
+    return isValidNumberEscalera(playedCard, selectedCards) || isValidSumCapture(playedCard, selectedCards);
+  }
+}
+
 function renderTableCards(cards) {
   if (!tableCards) return;
 
@@ -879,12 +980,85 @@ function updateCaptureSumIndicator() {
     return;
   }
   
-  const captureSum = calculateCardSum(selectedCaptureCards);
-  const playedCardValue = CARD_VALUES[selectedCard.rank] || 0;
+  const isFigure = !isNumberRank(selectedCard.rank);
   
-  console.log(`Suma seleccionada: ${captureSum} | Valor carta jugada: ${playedCardValue}`);
+  if (isFigure) {
+    // Figuras: validar escalera J-Q-K
+    const isValid = isValidFigureEscalera(selectedCard, selectedCaptureCards);
+    const cartas = selectedCaptureCards.map(c => c.rank).join('-');
+    console.log(`Escalera ${selectedCard.rank}-?-?: ${isValid ? '✓ Válida' : '✗ Inválida'} → ${cartas}`);
+  } else {
+    // Números: validar suma o escalera
+    const sumCapture = isValidSumCapture(selectedCard, selectedCaptureCards);
+    const escaleraCapture = isValidNumberEscalera(selectedCard, selectedCaptureCards);
+    
+    if (sumCapture) {
+      const sum = selectedCaptureCards.reduce((total, card) => total + (CARD_VALUES[card.rank] || 0), 0);
+      console.log(`Suma: ${selectedCaptureCards.map(c => c.rank).join(' + ')} = ${sum} ✓`);
+    } else if (escaleraCapture) {
+      const cartas = selectedCaptureCards.map(c => c.rank).join('-');
+      console.log(`Escalera: ${cartas} ✓`);
+    } else {
+      const cartas = selectedCaptureCards.map(c => c.rank).join(',');
+      console.log(`⚠️ Captura inválida: ${cartas}`);
+    }
+  }
 }
 
+// Función para renderizar el cartón
+function renderCarton(teamCapturedCards) {
+  const cartonAContainer = document.getElementById("cartonA");
+  const cartonBContainer = document.getElementById("cartonB");
+  const cartonASuma = document.getElementById("cartonASuma");
+  const cartonBSuma = document.getElementById("cartonBSuma");
+
+  if (!cartonAContainer || !cartonBContainer) return;
+
+  // Limpiar contenedores
+  cartonAContainer.innerHTML = "";
+  cartonBContainer.innerHTML = "";
+
+  // Renderizar Equipo A
+  const cardsA = teamCapturedCards?.A || [];
+  if (cardsA.length === 0) {
+    cartonAContainer.innerHTML = '<div class="card empty">Sin cartas</div>';
+  } else {
+    cardsA.forEach(card => {
+      const element = createCardElement(card, false);
+      element.style.width = "40px";
+      element.style.height = "56px";
+      element.style.fontSize = "0.68rem";
+      cartonAContainer.appendChild(element);
+    });
+  }
+
+  // Renderizar Equipo B
+  const cardsB = teamCapturedCards?.B || [];
+  if (cardsB.length === 0) {
+    cartonBContainer.innerHTML = '<div class="card empty">Sin cartas</div>';
+  } else {
+    cardsB.forEach(card => {
+      const element = createCardElement(card, false);
+      element.style.width = "40px";
+      element.style.height = "56px";
+      element.style.fontSize = "0.68rem";
+      cartonBContainer.appendChild(element);
+    });
+  }
+
+  // Calcular suma de cartas por equipo
+  const sumaA = calculateCardSum(cardsA);
+  const sumaB = calculateCardSum(cardsB);
+
+  if (cartonASuma) {
+    cartonASuma.textContent = `Suma: ${sumaA}`;
+  }
+  if (cartonBSuma) {
+    cartonBSuma.textContent = `Suma: ${sumaB}`;
+  }
+}
+
+// Función para renderizar la mano del usuario
 function renderMyHand(cards) {
   if (!player1Cards) return;
 
@@ -966,29 +1140,54 @@ function validateCapture(playedCard, captureCards) {
     return { isValid: true, message: "No capturando", type: "none" };
   }
 
-  const playedValue = CARD_VALUES[playedCard.rank] || 0;
-  const captureSum = calculateCardSum(captureCards);
-
-  // Validar captura por igualdad (escalera)
-  const hasEqual = captureCards.some(card => card.rank === playedCard.rank);
-  if (hasEqual) {
-    return { isValid: true, message: `Captura por igualdad (${playedCard.rank})`, type: "equal" };
+  const isFigure = !isNumberRank(playedCard.rank);
+  
+  // FIGURAS (J, Q, K) - Solo escalera
+  if (isFigure) {
+    const isValid = isValidFigureEscalera(playedCard, captureCards);
+    if (isValid) {
+      const cartas = captureCards.map(c => c.rank).join('-');
+      return { 
+        isValid: true, 
+        message: `Captura escalera: ${cartas}`, 
+        type: "escalera_figure" 
+      };
+    } else {
+      return { 
+        isValid: false, 
+        message: `Escalera J-Q-K inválida. Cartas seleccionadas: ${captureCards.map(c => c.rank).join(',')}`, 
+        type: null 
+      };
+    }
   }
-
-  // Validar captura por suma
-  if (captureSum === playedValue) {
+  
+  // NÚMEROS (A-7) - Escalera o Suma
+  const isSumValid = isValidSumCapture(playedCard, captureCards);
+  const isEscaleraValid = isValidNumberEscalera(playedCard, captureCards);
+  
+  if (isEscaleraValid) {
+    const cartas = captureCards.map(c => c.rank).join('-');
+    return { 
+      isValid: true, 
+      message: `Captura escalera: ${cartas}`, 
+      type: "escalera_number" 
+    };
+  }
+  
+  if (isSumValid) {
+    const sum = captureCards.reduce((total, card) => total + (CARD_VALUES[card.rank] || 0), 0);
     const cardList = captureCards.map(c => c.rank).join("+");
     return { 
       isValid: true, 
-      message: `Captura por suma: ${cardList} = ${playedValue}`, 
+      message: `Captura por suma: ${cardList} = ${sum}`, 
       type: "sum" 
     };
   }
-
+  
   // Captura inválida
   return { 
     isValid: false, 
-    message: `La suma (${captureSum}) no coincide con el valor de la carta (${playedValue})`, 
+    message: `Captura inválida. Selecciona cartas que formen escalera desde el ${playedCard.rank}, o que sumen ${CARD_VALUES[playedCard.rank]}`, 
     type: null 
   };
 }
