@@ -1288,7 +1288,7 @@ if (page === "game.html" && currentUser && currentSessionId) {
       username: currentUser.username,
       sessionId: currentSessionId
     });
-  }, 3000);
+  }, 20000);
 }
 
 socket.on("udp_estado_jugador", (data) => {

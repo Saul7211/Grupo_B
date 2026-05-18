@@ -1,4 +1,4 @@
-import dgram from "dgram"; 
+import dgram from "dgram";
 import crypto from "crypto";
 
 // Configuración de red para el servidor y cliente UDP
@@ -25,6 +25,8 @@ export function startUdpMonitor(io) {
             // Decodifica el buffer del mensaje recibido a una cadena y luego a formato JSON
             const data = JSON.parse(msg.toString());
 
+            const simulatedDelay = Math.floor(Math.random() * 180);
+
             // Filtro de seguridad: ignora cualquier mensaje que no sea del tipo esperado
             if (data.type !== "PING") return;
 
@@ -33,7 +35,7 @@ export function startUdpMonitor(io) {
             if (!pending) return; // Si no existe (ej. expiró por timeout y fue borrado), se ignora
 
             // Calcula la latencia (RTT) en milisegundos restando el tiempo de envío al tiempo actual
-            const latency = Date.now() - pending.sentAt;
+            const latency = Date.now() - pending.sentAt + simulatedDelay;
 
             // Valores por defecto para el estado de la conexión
             let status = "activo";
@@ -42,6 +44,10 @@ export function startUdpMonitor(io) {
             // Clasificación de la calidad de red basada en los umbrales de latencia
             if (latency > 250) quality = "débil";
             else if (latency > 120) quality = "media";
+
+            console.log(
+                `[UDP Monitor] Usuario: ${pending.username || pending.userId} | Sala: ${pending.sessionId} | Latencia: ${latency} ms | Estado: ${status} | Calidad: ${quality}`
+            );
 
             // Emite el resultado a través de WebSocket (Socket.io) 
             // Se usa io.to() para enviar el evento únicamente a la sesión/socket de este usuario específico
