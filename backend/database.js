@@ -2,6 +2,7 @@ import mysql from 'mysql2/promise';
 import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
+import logger from './logger/index.js';
 
 dotenv.config();
 
@@ -19,11 +20,11 @@ export const pool = mysql.createPool({
 // Verificar conexión al arrancar
 pool.getConnection()
     .then(conn => {
-        console.log('[DB] Conexión a MySQL exitosa.');
+        logger.info('[DB] Conexion a MySQL exitosa.');
         conn.release();
     })
     .catch(err => {
-        console.error('[DB] Error al conectar con MySQL:', err.message);
+        logger.error(`[DB] Error al conectar con MySQL: ${err.message}`);
         process.exit(1);
     });
 

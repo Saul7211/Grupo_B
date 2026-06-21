@@ -1,4 +1,5 @@
 import net from 'net';
+import logger from './logger/index.js';
 
 const MOTOR_PORT = 5000;
 const MOTOR_HOST = '127.0.0.1';
@@ -45,12 +46,12 @@ export function enviarAlMotor(datosJson, io) {
     const client = new net.Socket();
 
     client.connect(MOTOR_PORT, MOTOR_HOST, () => {
-        console.log(`[TCP Bridge] Conectado al Motor en ${MOTOR_HOST}:${MOTOR_PORT}`);
+        logger.info(`[TCP Bridge] Conectado al Motor en ${MOTOR_HOST}:${MOTOR_PORT}`);
         client.write(JSON.stringify(datosJson) + "\n");
     });
 
     client.on('data', async (data) => {
-        console.log('[TCP Bridge] El Motor respondió:', data.toString());
+        logger.debug(`[TCP Bridge] El Motor respondio: ${data.toString()}`);
 
         try {
             let respuesta = JSON.parse(data.toString());
@@ -85,7 +86,7 @@ export function enviarAlMotor(datosJson, io) {
                             emitToSession(io, sessionId, 'evento_motor', respuesta);
                         }
                     } catch (e) {
-                        console.error('[TCP Bridge] Error parseando estado:', d.toString());
+                        logger.error(`[TCP Bridge] Error parseando estado: ${d.toString()}`);
                         if (io && sessionId) {
                             emitToSession(io, sessionId, 'evento_motor', respuesta);
                         }
@@ -93,7 +94,7 @@ export function enviarAlMotor(datosJson, io) {
                     req.destroy();
                 });
                 req.on('error', (err) => {
-                    console.error('[TCP Bridge] Error pidiendo estado:', err.message);
+                    logger.error(`[TCP Bridge] Error pidiendo estado: ${err.message}`);
                     if (io && sessionId) {
                         emitToSession(io, sessionId, 'evento_motor', respuesta);
                     }
@@ -104,14 +105,14 @@ export function enviarAlMotor(datosJson, io) {
                 }
             }
         } catch (e) {
-            console.error('[TCP Bridge] Respuesta del motor no es JSON válido:', data.toString());
+            logger.error(`[TCP Bridge] Respuesta del motor no es JSON valido: ${data.toString()}`);
         }
 
         client.destroy();
     });
 
     client.on('error', (err) => {
-        console.error('[TCP Bridge] Error de conexión con el motor:', err.message);
-        console.error('Asegúrate de que engine-server.js esté corriendo en el puerto 5000.');
+        logger.error(`[TCP Bridge] Error de conexion con el motor: ${err.message}`);
+        logger.error('Asegurate de que engine-server.js este corriendo en el puerto 5000.');
     });
 }

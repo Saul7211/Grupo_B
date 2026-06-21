@@ -1,0 +1,5 @@
+[2026-06-21 14:58:58] [INFO] SERVIDOR ACTIVO -> Puerto: 3000
+[2026-06-21 14:58:58] [INFO] BASE DE DATOS -> juego_40
+[2026-06-21 14:58:58] [INFO] [UDP Monitor] Monitor iniciado
+[2026-06-21 14:58:58] [INFO] [UDP Monitor] Servidor UDP activo en 127.0.0.1:54322
+[2026-06-21 14:58:58] [ERROR] [DB] Error al conectar con MySQL: 

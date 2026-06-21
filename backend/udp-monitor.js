@@ -1,5 +1,6 @@
 import dgram from "dgram";
 import crypto from "crypto";
+import logger from './logger/index.js';
 
 // Configuración de red para el servidor y cliente UDP
 const UDP_PORT = 54322;
@@ -45,7 +46,7 @@ export function startUdpMonitor(io) {
             if (latency > 250) quality = "débil";
             else if (latency > 120) quality = "media";
 
-            console.log(
+            logger.info(
                 `[UDP Monitor] Usuario: ${pending.username || pending.userId} | Sala: ${pending.sessionId} | Latencia: ${latency} ms | Estado: ${status} | Calidad: ${quality}`
             );
 
@@ -65,16 +66,16 @@ export function startUdpMonitor(io) {
 
         } catch (error) {
             // Manejo de excepciones (ej. si msg no es un JSON válido) para evitar que el servidor colapse
-            console.error("[UDP Monitor] Error procesando mensaje:", error.message);
+            logger.error(`[UDP Monitor] Error procesando mensaje: ${error.message}`);
         }
     });
 
     // Inicia el servidor UDP en el puerto y host especificados para que empiece a escuchar
     udpServer.bind(UDP_PORT, UDP_HOST, () => {
-        console.log(`[UDP Monitor] Servidor UDP activo en ${UDP_HOST}:${UDP_PORT}`);
+        logger.info(`[UDP Monitor] Servidor UDP activo en ${UDP_HOST}:${UDP_PORT}`);
     });
 
-    console.log("[UDP Monitor] Monitor iniciado");
+    logger.info('[UDP Monitor] Monitor iniciado');
 }
 
 /**

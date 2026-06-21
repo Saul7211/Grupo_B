@@ -16,8 +16,14 @@ import {
 import { enviarAlMotor } from './tcp-bridge.js';
 import { startUdpMonitor, sendUdpPing } from './udp-monitor.js';
 import passport from './auth.js';
+import logger from './logger/index.js';
+import morganMiddleware from './logger/morganMiddleware.js';
+import usersRoutes from './routes/users.js';
+import logsRoutes from './routes/logs.js';
 
 const app = express();
+app.use(express.json());
+app.use(morganMiddleware);
 app.use('/frontend', express.static('../frontend'));
 app.use(passport.initialize());
 
@@ -44,6 +50,27 @@ app.get('/auth/google/callback',
         res.redirect(`/frontend/oauth-callback.html?${params.toString()}`);
     }
 );
+
+app.get('/', (_req, res) => {
+    res.json({
+        success: true,
+        message: 'Backend del juego activo',
+        endpoints: ['/users', '/users/:id', '/logs/resumen']
+    });
+});
+
+app.use('/users', usersRoutes);
+app.use('/logs', logsRoutes);
+
+app.use((req, res) => {
+    logger.warn(`Ruta no encontrada: ${req.method} ${req.originalUrl}`);
+    res.status(404).json({ success: false, message: 'Ruta no encontrada' });
+});
+
+app.use((err, req, res, _next) => {
+    logger.error(`Error interno en ${req.method} ${req.originalUrl}: ${err.message}`);
+    res.status(500).json({ success: false, message: 'Error interno del servidor' });
+});
 
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -85,12 +112,12 @@ export function emitToSession(ioInstance, sessionId, evento, datos) {
             }
         }
     }
-    console.log(`[emitToSession] ${evento} → sesión ${sessionId} (${enviados}/${jugadores.length} alcanzados)`);
+    logger.debug(`[emitToSession] ${evento} -> sesion ${sessionId} (${enviados}/${jugadores.length} alcanzados)`);
 }
 
 
 io.on('connection', (socket) => {
-    console.log('Cliente conectado vía WebSocket:', socket.id);
+    logger.info(`Cliente conectado via WebSocket: ${socket.id}`);
 
     // Enviar todas las salas pendientes al conectarse
     const salasArray = Array.from(salasPendientes.entries()).map(([sessionId, sala]) => ({
@@ -107,7 +134,7 @@ io.on('connection', (socket) => {
     socket.on('identificar_jugador', ({ userId, sessionId }) => {
         if (!userId || !sessionId) return;
 
-        console.log(`[IDENTIFICAR] Usuario ${userId} en sesión ${sessionId} → socket ${socket.id}`);
+        logger.info(`[IDENTIFICAR] Usuario ${userId} en sesion ${sessionId} -> socket ${socket.id}`);
 
         // Verificar que el usuario pertenece a esta sesión
         const activa = partidasActivas.get(sessionId);
@@ -115,7 +142,7 @@ io.on('connection', (socket) => {
         const jugadores = activa?.jugadores || pendiente?.jugadores || [];
 
         if (!jugadores.includes(userId)) {
-            console.warn(`[IDENTIFICAR] Usuario ${userId} NO pertenece a sesión ${sessionId}`);
+            logger.warn(`[IDENTIFICAR] Usuario ${userId} NO pertenece a sesion ${sessionId}`);
             socket.emit('error_notificacion', 'No perteneces a esta sesión.');
             return;
         }
@@ -128,7 +155,7 @@ io.on('connection', (socket) => {
             // Cancelar timeout de desconexión si existía
             if (prevInfo.timeoutId) {
                 clearTimeout(prevInfo.timeoutId);
-                console.log(`[IDENTIFICAR] Timeout cancelado para ${userId}`);
+                logger.info(`[IDENTIFICAR] Timeout cancelado para ${userId}`);
 
                 emitToSession(io, sessionId, 'jugador_reconectado', {
                     sessionId,
@@ -148,7 +175,7 @@ io.on('connection', (socket) => {
         }
 
         socketToUser.set(socket.id, userId);
-        console.log(`[IDENTIFICAR] ✅ Socket actualizado para ${userId}: ${socket.id}`);
+        logger.info(`[IDENTIFICAR] Socket actualizado para ${userId}: ${socket.id}`);
     });
 
     // 1. REGISTRO
@@ -179,7 +206,7 @@ io.on('connection', (socket) => {
 
                 if (playerInfo.timeoutId) {
                     clearTimeout(playerInfo.timeoutId);
-                    console.log(`[RECONEXIÓN-LOGIN] Usuario ${userId} se reconectó en sesión ${sessionId}`);
+                    logger.info(`[RECONEXION-LOGIN] Usuario ${userId} se reconecto en sesion ${sessionId}`);
 
                     emitToSession(io, sessionId, 'jugador_reconectado', {
                         sessionId,
@@ -234,7 +261,7 @@ io.on('connection', (socket) => {
                         try {
                             await recargarSaldo(uid, sala.monto);
                         } catch (e) {
-                            console.error(`[Sala expirada] No se pudo devolver saldo a ${uid}:`, e.message);
+                            logger.error(`[Sala expirada] No se pudo devolver saldo a ${uid}: ${e.message}`);
                         }
                     }
 
@@ -319,7 +346,7 @@ io.on('connection', (socket) => {
             });
 
             if (resultado.salaLlena) {
-                console.log(`[aceptar_partida] Partida ${sessionId} lista con 4 jugadores. Enviando al motor...`);
+                logger.info(`[aceptar_partida] Partida ${sessionId} lista con 4 jugadores. Enviando al motor...`);
                 clearTimeout(sala.timeoutId);
 
                 // Guardar partida activa ANTES de borrar de pendientes
@@ -401,7 +428,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('disconnect', () => {
-        console.log('Cliente desconectado:', socket.id);
+        logger.info(`Cliente desconectado: ${socket.id}`);
 
         const desconectadoUserId = socketToUser.get(socket.id);
         socketToUser.delete(socket.id);
@@ -411,7 +438,7 @@ io.on('connection', (socket) => {
         const playerInfo = jugadoresEnPartida.get(desconectadoUserId);
         const sessionId = playerInfo.sessionId;
 
-        console.log(`[DESCONEXIÓN] Usuario ${desconectadoUserId} desconectado de sesión ${sessionId}`);
+        logger.warn(`[DESCONEXION] Usuario ${desconectadoUserId} desconectado de sesion ${sessionId}`);
 
         const salaExiste = salasPendientes.has(sessionId);
 
@@ -430,7 +457,7 @@ io.on('connection', (socket) => {
             const stillDisconnected = jugadoresEnPartida.get(desconectadoUserId)?.timeoutId === timeoutId;
 
             if (stillDisconnected) {
-                console.log(`[TIMEOUT] Usuario ${desconectadoUserId} no se reconectó en 5 minutos. Cerrando sesión...`);
+                logger.error(`[TIMEOUT] Usuario ${desconectadoUserId} no se reconecto en 5 minutos. Cerrando sesion...`);
 
                 emitToSession(io, sessionId, 'sesion_cerrada', {
                     sessionId,
@@ -452,7 +479,7 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-    console.log(`  SERVIDOR ACTIVO   →  Puerto: ${PORT}`);
-    console.log(`  BASE DE DATOS     →  ${process.env.DB_NAME}`);
+    logger.info(`SERVIDOR ACTIVO -> Puerto: ${PORT}`);
+    logger.info(`BASE DE DATOS -> ${process.env.DB_NAME}`);
     startUdpMonitor(io);
 });
