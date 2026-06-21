@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Ingresando…</title>
+</head>
+<body>
+  <p style="font-family:sans-serif">Ingresando…</p>
+    <script>
+    const p = new URLSearchParams(window.location.search);
+    const userId   = p.get('userId');
+    const username = p.get('username');
+    const balance  = p.get('balance');
+    const provider = p.get('provider');
+
+    if (userId) {
+        const user = { userId, username, balance: Number(balance) || 0 };
+
+        // Solo si entró por OAuth 2.0 guardamos correo y foto (en memoria, no en BD)
+        if (provider === 'google') {
+        user.authProvider = 'google';
+        user.email = p.get('email') || null;
+        user.photo = p.get('photo') || null;
+        }
+
+        sessionStorage.setItem('currentUser', JSON.stringify(user));
+        window.location.replace('lobby.html');
+    } else {
+        window.location.replace('login.html');
+    }
+    </script>
+</body>
+</html>

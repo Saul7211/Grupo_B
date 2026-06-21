@@ -263,3 +263,35 @@ export async function registrarGanador(sessionId, winnerId) {
         connection.release();
     }
 }
+
+// LOGIN/REGISTRO CON GOOGLE
+export async function loginOrRegisterGoogle({ email, displayName, googleId }) {
+    const claveUnica    = email || `google_${googleId}`; // llave única (columna username)
+    const nombreVisible = displayName || claveUnica;      // lo que se muestra en pantalla
+
+    const [rows] = await pool.execute(
+        'SELECT id, balance FROM users WHERE username = ?',
+        [claveUnica]
+    );
+    if (rows.length > 0) {
+        const u = rows[0];
+        return { success: true, userId: u.id, username: nombreVisible, balance: u.balance };
+    }
+
+    const id = uuidv4();
+    const passwordHash = await bcrypt.hash(uuidv4(), 10); // aleatorio, nunca se usa
+    try {
+        await pool.execute(
+            'INSERT INTO users (id, username, password_hash) VALUES (?, ?, ?)',
+            [id, claveUnica, passwordHash]
+        );
+        return { success: true, userId: id, username: nombreVisible, balance: 0 };
+    } catch (err) {
+        if (err.code === 'ER_DUP_ENTRY') {
+            const [again] = await pool.execute('SELECT id, balance FROM users WHERE username = ?', [claveUnica]);
+            const u = again[0];
+            return { success: true, userId: u.id, username: nombreVisible, balance: u.balance };
+        }
+        throw err;
+    }
+}

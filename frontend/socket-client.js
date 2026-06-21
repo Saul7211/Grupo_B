@@ -198,6 +198,32 @@ if (balanceText && currentUser) {
   balanceText.textContent = `$${Number(currentUser.balance).toFixed(2)}`;
 }
 
+// Perfil de Google en el lobby (solo si entró por OAuth 2.0)
+const googleProfile = document.getElementById("googleProfile");
+if (googleProfile && currentUser && currentUser.authProvider === "google") {
+  const gpName  = document.getElementById("gpName");
+  const gpEmail = document.getElementById("gpEmail");
+  const gpPhoto = document.getElementById("gpPhoto");
+
+  if (gpName)  gpName.textContent  = currentUser.username || "";
+  if (gpEmail) gpEmail.textContent = currentUser.email || "";
+  if (gpPhoto && currentUser.photo) gpPhoto.src = currentUser.photo;
+
+  googleProfile.classList.remove("hidden");
+}
+
+// Perfil de Google en la partida (solo si entró por OAuth 2.0)
+const googleChip = document.getElementById("googleChip");
+if (googleChip && currentUser && currentUser.authProvider === "google") {
+  const gpEmailGame = document.getElementById("gpEmailGame");
+  const gpPhotoGame = document.getElementById("gpPhotoGame");
+
+  if (gpEmailGame) gpEmailGame.textContent = currentUser.email || "";
+  if (gpPhotoGame && currentUser.photo) gpPhotoGame.src = currentUser.photo;
+
+  googleChip.classList.remove("hidden");
+}
+
 if (rechargeBtn) {
   rechargeBtn.addEventListener("click", () => {
     const monto = Number(document.getElementById("rechargeInput").value);

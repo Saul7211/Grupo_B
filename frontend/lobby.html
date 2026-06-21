@@ -7,6 +7,20 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/lobby.css">
+  <style>
+    .google-profile{
+      display:flex;align-items:center;gap:.85rem;
+      margin:1.25rem auto 0;padding:.7rem 1.1rem;width:max-content;max-width:90%;
+      background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:14px;
+    }
+    .google-profile .gp-photo{
+      width:46px;height:46px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.2);
+    }
+    .google-profile .gp-info{ display:flex;flex-direction:column;text-align:left;line-height:1.3; }
+    .google-profile .gp-name{ font-family:'Outfit',sans-serif;font-weight:600;color:#fff;font-size:.95rem; }
+    .google-profile .gp-email{ font-family:'Outfit',sans-serif;font-weight:300;color:rgba(255,255,255,.6);font-size:.82rem; }
+    .google-profile.hidden{ display:none; }
+  </style>
 </head>
 <body>
 
@@ -39,6 +53,14 @@
       </div>
       <h1>Mesa de Juego</h1>
       <p>Crea una sala, invita amigos y apuesta con estrategia.</p>
+      <!-- Perfil de Google: solo se muestra si entró por OAuth 2.0 -->
+      <div id="googleProfile" class="google-profile hidden">
+        <img id="gpPhoto" class="gp-photo" alt="Foto de perfil" referrerpolicy="no-referrer">
+        <div class="gp-info">
+          <span id="gpName" class="gp-name"></span>
+          <span id="gpEmail" class="gp-email"></span>
+        </div>
+      </div>
     </div>
 
     <div class="grid">

@@ -9,6 +9,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="css/game.css">
+  <style>
+    .chip-google{ display:inline-flex; align-items:center; gap:.5rem; }
+    .chip-google.hidden{ display:none; }
+    .chip-google .gp-photo-sm{ width:24px; height:24px; border-radius:50%; object-fit:cover; }
+    .chip-google .gp-email-sm{
+      font-size:.8rem; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    }
+  </style>
 </head>
 
 <body>
@@ -29,6 +37,13 @@
       </div>
       <button id="logoutBtn" class="btn-nav">Salir</button>
     </div>
+
+    <!-- Perfil de Google: solo si entró por OAuth 2.0 -->
+    <div id="googleChip" class="chip chip-google hidden">
+      <img id="gpPhotoGame" class="gp-photo-sm" alt="" referrerpolicy="no-referrer">
+      <span id="gpEmailGame" class="gp-email-sm"></span>
+    </div>
+    
     <!-- PANEL UDP -->
 
     <div class="chip udp-chip">

@@ -15,9 +15,36 @@ import {
 } from './database.js';
 import { enviarAlMotor } from './tcp-bridge.js';
 import { startUdpMonitor, sendUdpPing } from './udp-monitor.js';
+import passport from './auth.js';
 
 const app = express();
 app.use('/frontend', express.static('../frontend'));
+app.use(passport.initialize());
+
+// ── OAUTH CON GOOGLE ──────────────────────────────────────────────
+app.get('/auth/google',
+    passport.authenticate('google', { scope: ['profile', 'email'], session: false })
+);
+
+app.get('/auth/google/callback',
+    passport.authenticate('google', {
+        failureRedirect: '/frontend/login.html',
+        session: false
+    }),
+    (req, res) => {
+        const u = req.user;
+        const params = new URLSearchParams({
+            userId:   u.userId,
+            username: u.username,
+            balance:  String(u.balance ?? 0),
+            email:    u.email || '',
+            photo:    u.photo || '',
+            provider: 'google'
+        });
+        res.redirect(`/frontend/oauth-callback.html?${params.toString()}`);
+    }
+);
+
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
