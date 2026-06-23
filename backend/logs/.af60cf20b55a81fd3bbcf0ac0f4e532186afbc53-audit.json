@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "C:\\Users\\Micha\\Documentos\\DRISTRI\\II PARCIAL\\LAB_PRACTICO\\PROYECTO\\Grupo_B\\backend\\logs\\.af60cf20b55a81fd3bbcf0ac0f4e532186afbc53-audit.json",
+    "files": [
+        {
+            "date": 1782186393834,
+            "name": "C:\\Users\\Micha\\Documentos\\DRISTRI\\II PARCIAL\\LAB_PRACTICO\\PROYECTO\\Grupo_B\\backend\\logs\\application-2026-06-22.log",
+            "hash": "ff5a4864a6de09a74568127e5a0faabdea05c5574b54b5e6c35d9d091e0d01e3"
+        }
+    ],
+    "hashType": "sha256"
+}

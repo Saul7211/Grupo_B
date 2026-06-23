@@ -12,9 +12,10 @@
     const username = p.get('username');
     const balance  = p.get('balance');
     const provider = p.get('provider');
+    const token    = p.get('token');
 
     if (userId) {
-        const user = { userId, username, balance: Number(balance) || 0 };
+        const user = { userId, username, balance: Number(balance) || 0, token };
 
         // Solo si entró por OAuth 2.0 guardamos correo y foto (en memoria, no en BD)
         if (provider === 'google') {

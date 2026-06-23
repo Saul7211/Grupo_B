@@ -61,6 +61,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
 let currentUser = JSON.parse(sessionStorage.getItem("currentUser")) || null;
 let currentSessionId = sessionStorage.getItem("currentSessionId") || null;
+
+function authPayload(extra = {}) {
+  return {
+    ...extra,
+    token: currentUser?.token || null
+  };
+}
+
 let selectedCard = null;
 let selectedCaptureCards = [];
 let playersMap = {};
@@ -164,10 +172,10 @@ socket.on("connect", () => {
   // Sin esto, el servidor no sabe qué socket pertenece a qué jugador
   if (currentSessionId && currentUser) {
     console.log("Identificando jugador en sesión:", currentSessionId);
-    socket.emit('identificar_jugador', {
+    socket.emit('identificar_jugador', authPayload({
       userId: currentUser.userId,
       sessionId: currentSessionId
-    });
+    }));
   }
 });
 
@@ -233,10 +241,10 @@ if (rechargeBtn) {
       return;
     }
 
-    socket.emit("recargar_saldo", {
+    socket.emit("recargar_saldo", authPayload({
       userId: currentUser.userId,
       monto
-    });
+    }));
   });
 }
 
@@ -260,10 +268,10 @@ if (createRoomBtn) {
       return;
     }
 
-    socket.emit("crear_partida", {
+    socket.emit("crear_partida", authPayload({
       userId: currentUser.userId,
       monto
-    });
+    }));
   });
 }
 
@@ -357,10 +365,10 @@ if (joinRoomBtn) {
 }
 
 function joinRoom(sessionId) {
-  socket.emit("aceptar_partida", {
+  socket.emit("aceptar_partida", authPayload({
     userId: currentUser.userId,
     sessionId
-  });
+  }));
 }
 
 
@@ -1250,6 +1258,7 @@ if (playCardBtn) {
     const jugada = {
       userId: currentUser.userId,
       sessionId: currentSessionId,
+      token: currentUser.token,
       card: {
         id: selectedCard.id,
         rank: selectedCard.rank,
@@ -1309,11 +1318,11 @@ const udpStatusDot = document.getElementById("udpStatusDot");
 
 if (page === "game.html" && currentUser && currentSessionId) {
   setInterval(() => {
-    socket.emit("udp_ping_jugador", {
+    socket.emit("udp_ping_jugador", authPayload({
       userId: currentUser.userId,
       username: currentUser.username,
       sessionId: currentSessionId
-    });
+    }));
   }, 20000);
 }
 
@@ -1344,6 +1353,6 @@ socket.on("udp_estado_jugador", (data) => {
 
 window.registrar = (username, password) => socket.emit("registrar_usuario", { username, password });
 window.login = (username, password) => socket.emit("login_usuario", { username, password });
-window.recargarSaldo = (monto) => socket.emit("recargar_saldo", { userId: currentUser.userId, monto });
-window.crearPartida = (monto) => socket.emit("crear_partida", { userId: currentUser.userId, monto });
+window.recargarSaldo = (monto) => socket.emit("recargar_saldo", authPayload({ userId: currentUser.userId, monto }));
+window.crearPartida = (monto) => socket.emit("crear_partida", authPayload({ userId: currentUser.userId, monto }));
 window.aceptarPartida = joinRoom;

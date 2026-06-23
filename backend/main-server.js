@@ -20,6 +20,7 @@ import logger from './logger/index.js';
 import morganMiddleware from './logger/morganMiddleware.js';
 import usersRoutes from './routes/users.js';
 import logsRoutes from './routes/logs.js';
+import { authenticateSocketPayload, authMiddleware, createAuthToken } from './middleware/authMiddleware.js';
 
 const app = express();
 app.use(express.json());
@@ -39,13 +40,15 @@ app.get('/auth/google/callback',
     }),
     (req, res) => {
         const u = req.user;
+        const token = createAuthToken(u);
         const params = new URLSearchParams({
             userId:   u.userId,
             username: u.username,
             balance:  String(u.balance ?? 0),
             email:    u.email || '',
             photo:    u.photo || '',
-            provider: 'google'
+            provider: 'google',
+            token
         });
         res.redirect(`/frontend/oauth-callback.html?${params.toString()}`);
     }
@@ -61,6 +64,19 @@ app.get('/', (_req, res) => {
 
 app.use('/users', usersRoutes);
 app.use('/logs', logsRoutes);
+
+app.get('/auth/me', authMiddleware, async (req, res) => {
+    const [rows] = await pool.execute(
+        'SELECT id, username, balance FROM users WHERE id = ?',
+        [req.userId]
+    );
+
+    if (rows.length === 0) {
+        return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
+    }
+
+    return res.json({ success: true, user: rows[0] });
+});
 
 app.use((req, res) => {
     logger.warn(`Ruta no encontrada: ${req.method} ${req.originalUrl}`);
@@ -131,8 +147,13 @@ io.on('connection', (socket) => {
     //    Actualiza el socketId del jugador para que emitToSession lo encuentre.
     // ══════════════════════════════════════════════════════════════════════════
 
-    socket.on('identificar_jugador', ({ userId, sessionId }) => {
-        if (!userId || !sessionId) return;
+    socket.on('identificar_jugador', (payload = {}) => {
+        try {
+            const authUser = authenticateSocketPayload(socket, payload);
+            const userId = authUser.userId;
+            const { sessionId } = payload;
+
+            if (!userId || !sessionId) return;
 
         logger.info(`[IDENTIFICAR] Usuario ${userId} en sesion ${sessionId} -> socket ${socket.id}`);
 
@@ -174,8 +195,11 @@ io.on('connection', (socket) => {
             });
         }
 
-        socketToUser.set(socket.id, userId);
-        logger.info(`[IDENTIFICAR] Socket actualizado para ${userId}: ${socket.id}`);
+            socketToUser.set(socket.id, userId);
+            logger.info(`[IDENTIFICAR] Socket actualizado para ${userId}: ${socket.id}`);
+        } catch (err) {
+            socket.emit('error_notificacion', err.message);
+        }
     });
 
     // 1. REGISTRO
@@ -196,7 +220,13 @@ io.on('connection', (socket) => {
         try {
             if (!username || !password) throw new Error('Usuario y contraseña son obligatorios.');
             const resultado = await loginUsuario(username, password);
-            const userId = resultado.id;
+            const token = createAuthToken(resultado);
+            const userId = resultado.userId;
+
+            resultado.token = token;
+            socket.data.token = token;
+            socket.data.userId = userId;
+            socket.data.username = resultado.username;
 
             socketToUser.set(socket.id, userId);
 
@@ -227,8 +257,10 @@ io.on('connection', (socket) => {
 
     //  3. RECARGAR SALDO 
 
-    socket.on('recargar_saldo', async ({ userId, monto }) => {
+    socket.on('recargar_saldo', async (payload = {}) => {
         try {
+            const { userId } = authenticateSocketPayload(socket, payload);
+            const { monto } = payload;
             const resultado = await recargarSaldo(userId, Number(monto));
             socket.emit('saldo_recargado', { nuevoSaldo: resultado.nuevoSaldo });
         } catch (err) {
@@ -238,8 +270,10 @@ io.on('connection', (socket) => {
 
     //  4. PEDIR SALDO ACTUAL 
 
-    socket.on('pedir_saldo', async (userId) => {
+    socket.on('pedir_saldo', async (payload = {}) => {
         try {
+            if (typeof payload === 'string') payload = { userId: payload };
+            const { userId } = authenticateSocketPayload(socket, payload);
             const [rows] = await pool.execute('SELECT balance FROM users WHERE id = ?', [userId]);
             socket.emit('recibir_saldo', rows[0]?.balance ?? 0);
         } catch (err) {
@@ -249,8 +283,10 @@ io.on('connection', (socket) => {
 
     // 5. CREAR PARTIDA 
 
-    socket.on('crear_partida', async ({ userId, monto }) => {
+    socket.on('crear_partida', async (payload = {}) => {
         try {
+            const { userId } = authenticateSocketPayload(socket, payload);
+            const { monto } = payload;
             const resultado = await crearPartida(userId, Number(monto));
             const sessionId = resultado.sessionId;
 
@@ -306,8 +342,10 @@ io.on('connection', (socket) => {
 
     // 6. ACEPTAR PARTIDA 
 
-    socket.on('aceptar_partida', async ({ userId, sessionId }) => {
+    socket.on('aceptar_partida', async (payload = {}) => {
         try {
+            const { userId } = authenticateSocketPayload(socket, payload);
+            const { sessionId } = payload;
             const sala = salasPendientes.get(sessionId);
             if (!sala) throw new Error('Sala no encontrada o ya iniciada.');
 
@@ -377,8 +415,10 @@ io.on('connection', (socket) => {
 
     // 7. JUGAR CARTA
 
-    socket.on('jugar_carta', async ({ userId, sessionId, card, capture }) => {
+    socket.on('jugar_carta', async (payload = {}) => {
         try {
+            const { userId } = authenticateSocketPayload(socket, payload);
+            const { sessionId, card, capture } = payload;
             if (!userId || !sessionId || !card) {
                 throw new Error('Faltan datos para jugar la carta.');
             }
@@ -399,8 +439,10 @@ io.on('connection', (socket) => {
 
     //  8. REGISTRAR GANADOR 
 
-    socket.on('registrar_ganador', async ({ sessionId, winnerId }) => {
+    socket.on('registrar_ganador', async (payload = {}) => {
         try {
+            authenticateSocketPayload(socket, payload);
+            const { sessionId, winnerId } = payload;
             const resultado = await registrarGanador(sessionId, winnerId);
             emitToSession(io, sessionId, 'partida_finalizada', {
                 sessionId,
@@ -416,7 +458,18 @@ io.on('connection', (socket) => {
 
     // MONITOREO UDP DE LATENCIA
 
-    socket.on('udp_ping_jugador', ({ userId, username, sessionId }) => {
+    socket.on('udp_ping_jugador', (payload = {}) => {
+        let authUser;
+        try {
+            authUser = authenticateSocketPayload(socket, payload);
+        } catch {
+            return;
+        }
+
+        const userId = authUser.userId;
+        const username = authUser.username || payload.username;
+        const { sessionId } = payload;
+
         if (!userId || !sessionId) return;
 
         sendUdpPing({
