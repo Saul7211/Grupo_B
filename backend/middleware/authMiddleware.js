@@ -41,6 +41,7 @@ export function createRecoveryToken(user) {
     );
 }
 
+//Verifica que un token sea específicamente de recuperación.
 export function verifyRecoveryToken(token) {
     const decoded = verifyAuthToken(token);
 
