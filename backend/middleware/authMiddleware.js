@@ -66,6 +66,7 @@ export function authMiddleware(req, res, next) {
     }
 }
 
+//Autentica eventos de Socket.IO utilizando un token JWT.
 export function authenticateSocketPayload(socket, payload = {}) {
     const token = payload.token || socket.data.token;
     const decoded = verifyAuthToken(token);
