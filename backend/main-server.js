@@ -20,6 +20,8 @@ import { startUdpMonitor, sendUdpPing } from './udp-monitor.js';
 import passport from './auth.js';
 import logger from './logger/index.js';
 import morganMiddleware from './logger/morganMiddleware.js';
+import routeAccessLogger from './logger/routeAccessLogger.js';
+import errorLogger from './logger/errorLogger.js';
 import usersRoutes from './routes/users.js';
 import logsRoutes from './routes/logs.js';
 import {
@@ -33,6 +35,7 @@ import {
 const app = express();
 app.use(express.json());
 app.use(morganMiddleware);
+app.use(routeAccessLogger);
 app.use('/frontend', express.static('../frontend'));
 app.use(passport.initialize());
 
@@ -87,14 +90,12 @@ app.get('/auth/me', authMiddleware, async (req, res) => {
 });
 
 app.use((req, res) => {
-    logger.warn(`Ruta no encontrada: ${req.method} ${req.originalUrl}`);
+    logger.warn(`[RUTA_NO_ENCONTRADA] ${req.method} ${req.originalUrl}`);
     res.status(404).json({ success: false, message: 'Ruta no encontrada' });
 });
 
-app.use((err, req, res, _next) => {
-    logger.error(`Error interno en ${req.method} ${req.originalUrl}: ${err.message}`);
-    res.status(500).json({ success: false, message: 'Error interno del servidor' });
-});
+// Middleware de error mejorado (debe ir al final)
+app.use(errorLogger);
 
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -216,8 +217,10 @@ io.on('connection', (socket) => {
         try {
             if (!username || !password) throw new Error('Usuario y contraseña son obligatorios.');
             const resultado = await registrarUsuario(username, password);
+            logger.info(`[WS_REGISTRO_EXITOSO] Usuario registrado: ${username} (ID: ${resultado.userId})`);
             socket.emit('registro_exitoso', resultado);
         } catch (err) {
+            logger.warn(`[WS_REGISTRO_ERROR] Intento fallido de registro. Usuario: ${username || 'DESCONOCIDO'} | Error: ${err.message}`);
             socket.emit('error_notificacion', err.message);
         }
     });
@@ -237,6 +240,8 @@ io.on('connection', (socket) => {
             socket.data.username = resultado.username;
 
             socketToUser.set(socket.id, userId);
+
+            logger.info(`[WS_LOGIN_EXITOSO] Usuario: ${resultado.username} (ID: ${userId}) | Socket: ${socket.id}`);
 
             // Si el usuario tenía una partida activa, actualizar su socket
             if (sessionId && jugadoresEnPartida.has(userId)) {
@@ -259,6 +264,7 @@ io.on('connection', (socket) => {
 
             socket.emit('login_exitoso', resultado);
         } catch (err) {
+            logger.warn(`[WS_LOGIN_ERROR] Intento fallido de login. Usuario: ${username || 'DESCONOCIDO'} | Socket: ${socket.id} | Error: ${err.message}`);
             socket.emit('error_notificacion', err.message);
         }
     });
@@ -272,7 +278,7 @@ io.on('connection', (socket) => {
             const user = await buscarUsuarioParaRecuperacion(username);
             const token = createRecoveryToken(user);
 
-            logger.info(`[RECUPERACION] Token temporal generado para usuario ${user.userId}`);
+            logger.info(`[WS_RECUPERACION_TOKEN] Token temporal generado para usuario: ${user.userId} (${username})`);
 
             socket.emit('recuperacion_token_generado', {
                 msg: 'Token temporal generado. Usalo para restablecer tu contrasena.',
@@ -280,6 +286,7 @@ io.on('connection', (socket) => {
                 expiresIn: process.env.RECOVERY_TOKEN_EXPIRES_IN || '15m'
             });
         } catch (err) {
+            logger.warn(`[WS_RECUPERACION_ERROR] Error en solicitud de recuperación. Usuario: ${username || 'DESCONOCIDO'} | Error: ${err.message}`);
             socket.emit('error_notificacion', err.message);
         }
     });
@@ -293,11 +300,12 @@ io.on('connection', (socket) => {
             const decoded = verifyRecoveryToken(token);
             await actualizarContrasenaUsuario(decoded.userId, nuevaPassword);
 
-            logger.info(`[RECUPERACION] Contrasena restablecida para usuario ${decoded.userId}`);
+            logger.info(`[WS_CONTRASENA_RESTABLECIDA] Usuario: ${decoded.userId} ha actualizado su contraseña`);
             socket.emit('contrasena_restablecida', {
                 msg: 'Contrasena actualizada correctamente. Ya puedes iniciar sesion.'
             });
         } catch (err) {
+            logger.warn(`[WS_RESTABLECER_ERROR] Error al restablecer contraseña. Error: ${err.message}`);
             socket.emit('error_notificacion', err.message);
         }
     });
@@ -309,9 +317,10 @@ io.on('connection', (socket) => {
             const { userId } = authenticateSocketPayload(socket, payload);
             const { monto } = payload;
             const resultado = await recargarSaldo(userId, Number(monto));
+            logger.info(`[WS_SALDO_RECARGADO] Usuario: ${userId} | Monto: ${monto} | Nuevo saldo: ${resultado.nuevoSaldo}`);
             socket.emit('saldo_recargado', { nuevoSaldo: resultado.nuevoSaldo });
         } catch (err) {
-            socket.emit('error_notificacion', err.message);
+            logger.warn(`[WS_SALDO_ERROR] Error al recargar saldo. Error: ${err.message}`);
         }
     });
 
@@ -337,9 +346,12 @@ io.on('connection', (socket) => {
             const resultado = await crearPartida(userId, Number(monto));
             const sessionId = resultado.sessionId;
 
+            logger.info(`[WS_PARTIDA_CREADA] Usuario: ${userId} | SessionID: ${sessionId} | Monto: ${monto}`);
+
             const timeoutId = setTimeout(async () => {
                 const sala = salasPendientes.get(sessionId);
                 if (sala && sala.jugadores.length < 4) {
+                    logger.warn(`[WS_SALA_EXPIRADA] SessionID: ${sessionId} | Razón: Menos de 4 jugadores | Jugadores: ${sala.jugadores.length}`);
                     for (const uid of sala.jugadores) {
                         try {
                             await recargarSaldo(uid, sala.monto);
@@ -383,6 +395,7 @@ io.on('connection', (socket) => {
                 monto: Number(monto)
             });
         } catch (err) {
+            logger.error(`[WS_CREAR_PARTIDA_ERROR] Usuario: ${payload.userId || 'DESCONOCIDO'} | Monto: ${payload.monto} | Error: ${err.message}`);
             socket.emit('error_notificacion', err.message);
         }
     });
@@ -397,11 +410,13 @@ io.on('connection', (socket) => {
             if (!sala) throw new Error('Sala no encontrada o ya iniciada.');
 
             if (sala.jugadores.includes(userId)) {
+                logger.warn(`[WS_ACEPTAR_PARTIDA_DUPLICATE] Usuario: ${userId} | SessionID: ${sessionId} | Razón: Ya está en la sala`);
                 socket.emit('error_notificacion', 'Ya estás en la sala.');
                 return;
             }
 
             if (sala.jugadores.length >= 4) {
+                logger.warn(`[WS_ACEPTAR_PARTIDA_LLENA] Usuario: ${userId} | SessionID: ${sessionId} | Razón: Sala llena`);
                 socket.emit('error_notificacion', 'La sala ya está llena.');
                 return;
             }
@@ -410,6 +425,7 @@ io.on('connection', (socket) => {
             if (!resultado.success) throw new Error('No se pudo unir a la sala.');
 
             sala.jugadores.push(userId);
+            logger.info(`[WS_USUARIO_UNIDO_SALA] Usuario: ${userId} | SessionID: ${sessionId} | Jugadores: ${sala.jugadores.length}/4`);
 
             jugadoresEnPartida.set(userId, {
                 sessionId,
@@ -431,7 +447,7 @@ io.on('connection', (socket) => {
             });
 
             if (resultado.salaLlena) {
-                logger.info(`[aceptar_partida] Partida ${sessionId} lista con 4 jugadores. Enviando al motor...`);
+                logger.info(`[WS_JUEGO_INICIADO] SessionID: ${sessionId} | Jugadores: ${sala.jugadores.length} | Monto total: ${sala.monto * 4}`);
                 clearTimeout(sala.timeoutId);
 
                 // Guardar partida activa ANTES de borrar de pendientes
@@ -456,6 +472,7 @@ io.on('connection', (socket) => {
                 io.emit('sala_removida', { sessionId });
             }
         } catch (err) {
+            logger.error(`[WS_ACEPTAR_PARTIDA_ERROR] Usuario: ${payload.userId || 'DESCONOCIDO'} | SessionID: ${payload.sessionId} | Error: ${err.message}`);
             socket.emit('error_notificacion', 'Error al unirse: ' + err.message);
         }
     });
@@ -470,6 +487,8 @@ io.on('connection', (socket) => {
                 throw new Error('Faltan datos para jugar la carta.');
             }
 
+            logger.debug(`[WS_JUGAR_CARTA] Usuario: ${userId} | SessionID: ${sessionId} | Carta: ${card}`);
+
             enviarAlMotor({
                 action: 'PLAY_CARD',
                 sessionId,
@@ -479,6 +498,7 @@ io.on('connection', (socket) => {
             }, io);
 
         } catch (err) {
+            logger.warn(`[WS_JUGAR_CARTA_ERROR] Usuario: ${payload.userId || 'DESCONOCIDO'} | Error: ${err.message}`);
             socket.emit('error_notificacion', 'Error al jugar carta: ' + err.message);
         }
     });
