@@ -28,6 +28,7 @@ export function verifyAuthToken(token) {
     return jwt.verify(token, JWT_SECRET);
 }
 
+//Genera un token especial para recuperación de contraseña.
 export function createRecoveryToken(user) {
     return jwt.sign(
         {
