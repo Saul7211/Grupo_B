@@ -21,9 +21,11 @@ import passport from './auth.js';
 import logger from './logger/index.js';
 import morganMiddleware from './logger/morganMiddleware.js';
 import routeAccessLogger from './logger/routeAccessLogger.js';
+import identifyUser from './middleware/identifyUser.js';
 import errorLogger from './logger/errorLogger.js';
 import usersRoutes from './routes/users.js';
 import logsRoutes from './routes/logs.js';
+import logsPanelRoutes from './routes/logs-panel.js';
 import {
     authenticateSocketPayload,
     authMiddleware,
@@ -34,6 +36,7 @@ import {
 
 const app = express();
 app.use(express.json());
+app.use(identifyUser);  
 app.use(morganMiddleware);
 app.use(routeAccessLogger);
 app.use('/frontend', express.static('../frontend'));
@@ -75,6 +78,7 @@ app.get('/', (_req, res) => {
 
 app.use('/users', usersRoutes);
 app.use('/logs', logsRoutes);
+app.use('/logs', logsPanelRoutes);  
 
 app.get('/auth/me', authMiddleware, async (req, res) => {
     const [rows] = await pool.execute(
