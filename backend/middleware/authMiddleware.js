@@ -7,6 +7,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'juego40-dev-secret';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '2h';
 const RECOVERY_TOKEN_EXPIRES_IN = process.env.RECOVERY_TOKEN_EXPIRES_IN || '15m';
 
+//Genera un token JWT para autenticación del usuario.
 export function createAuthToken(user) {
     return jwt.sign(
         {
