@@ -1,7 +1,11 @@
 import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const JWT_SECRET = process.env.JWT_SECRET || 'juego40-dev-secret';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '2h';
+const RECOVERY_TOKEN_EXPIRES_IN = process.env.RECOVERY_TOKEN_EXPIRES_IN || '15m';
 
 export function createAuthToken(user) {
     return jwt.sign(
@@ -20,6 +24,28 @@ export function verifyAuthToken(token) {
     }
 
     return jwt.verify(token, JWT_SECRET);
+}
+
+export function createRecoveryToken(user) {
+    return jwt.sign(
+        {
+            userId: user.userId,
+            username: user.username,
+            tipo: 'recuperacion'
+        },
+        JWT_SECRET,
+        { expiresIn: RECOVERY_TOKEN_EXPIRES_IN }
+    );
+}
+
+export function verifyRecoveryToken(token) {
+    const decoded = verifyAuthToken(token);
+
+    if (decoded.tipo !== 'recuperacion') {
+        throw new Error('Token no valido para recuperacion.');
+    }
+
+    return decoded;
 }
 
 export function authMiddleware(req, res, next) {

@@ -75,6 +75,41 @@ export async function loginUsuario(username, password) {
     };
 }
 
+export async function buscarUsuarioParaRecuperacion(username) {
+    const [rows] = await pool.execute(
+        'SELECT id, username FROM users WHERE username = ?',
+        [username]
+    );
+
+    if (rows.length === 0) {
+        throw new Error('Usuario no encontrado.');
+    }
+
+    const user = rows[0];
+    return {
+        userId: user.id,
+        username: user.username
+    };
+}
+
+export async function actualizarContrasenaUsuario(userId, nuevaPassword) {
+    if (!nuevaPassword || nuevaPassword.length < 4) {
+        throw new Error('La nueva contrasena debe tener al menos 4 caracteres.');
+    }
+
+    const passwordHash = await bcrypt.hash(nuevaPassword, 10);
+    const [result] = await pool.execute(
+        'UPDATE users SET password_hash = ? WHERE id = ?',
+        [passwordHash, userId]
+    );
+
+    if (result.affectedRows === 0) {
+        throw new Error('Usuario no encontrado.');
+    }
+
+    return { success: true };
+}
+
 // SALDO
 
 

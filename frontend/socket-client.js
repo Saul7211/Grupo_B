@@ -136,6 +136,72 @@ socket.on("login_exitoso", (data) => {
   window.location.href = "lobby.html";
 });
 
+const toggleRecoveryBtn = document.getElementById("toggleRecoveryBtn");
+const authCard = document.querySelector(".auth-card");
+const backToLoginBtn = document.getElementById("backToLoginBtn");
+const recoveryPanel = document.getElementById("recoveryPanel");
+const requestRecoveryBtn = document.getElementById("requestRecoveryBtn");
+const resetPasswordBtn = document.getElementById("resetPasswordBtn");
+const recoveryTokenBox = document.getElementById("recoveryTokenBox");
+const resetTokenInput = document.getElementById("resetToken");
+
+if (toggleRecoveryBtn && authCard) {
+  toggleRecoveryBtn.addEventListener("click", () => {
+    authCard.classList.add("recovery-mode");
+  });
+}
+
+if (backToLoginBtn && authCard) {
+  backToLoginBtn.addEventListener("click", () => {
+    authCard.classList.remove("recovery-mode");
+  });
+}
+
+if (requestRecoveryBtn) {
+  requestRecoveryBtn.addEventListener("click", () => {
+    const username = document.getElementById("recoverUsername").value.trim();
+
+    if (!username) {
+      showToast("Ingrese el usuario registrado", "warn");
+      return;
+    }
+
+    socket.emit("solicitar_recuperacion", { username });
+  });
+}
+
+socket.on("recuperacion_token_generado", (data) => {
+  if (recoveryTokenBox) recoveryTokenBox.value = data.token;
+  if (resetTokenInput) resetTokenInput.value = data.token;
+  showToast(`Token generado. Expira en ${data.expiresIn}`, "ok", 6000);
+});
+
+if (resetPasswordBtn) {
+  resetPasswordBtn.addEventListener("click", () => {
+    const token = document.getElementById("resetToken").value.trim();
+    const nuevaPassword = document.getElementById("resetPassword").value.trim();
+
+    if (!token || !nuevaPassword) {
+      showToast("Ingrese token y nueva contraseña", "warn");
+      return;
+    }
+
+    socket.emit("restablecer_contrasena", { token, nuevaPassword });
+  });
+}
+
+socket.on("contrasena_restablecida", (data) => {
+  showToast(data.msg, "ok", 6000);
+
+  if (recoveryTokenBox) recoveryTokenBox.value = "";
+  if (resetTokenInput) resetTokenInput.value = "";
+
+  const resetPasswordInput = document.getElementById("resetPassword");
+  if (resetPasswordInput) resetPasswordInput.value = "";
+
+  if (authCard) authCard.classList.remove("recovery-mode");
+});
+
 /* =========================
    REGISTRO
 ========================= */

@@ -1,0 +1,64 @@
+[2026-06-23 23:08:45] [INFO] SERVIDOR ACTIVO -> Puerto: 3000
+[2026-06-23 23:08:45] [INFO] BASE DE DATOS -> juego_40
+[2026-06-23 23:08:45] [INFO] [UDP Monitor] Monitor iniciado
+[2026-06-23 23:08:45] [INFO] [UDP Monitor] Servidor UDP activo en 127.0.0.1:54322
+[2026-06-23 23:08:46] [INFO] [DB] Conexion a MySQL exitosa.
+[2026-06-23 23:09:46] [INFO] Cliente conectado via WebSocket: Zd_XAMmjZMCYCrmyAAAB
+[2026-06-23 23:09:46] [WARN] Ruta no encontrada: GET /favicon.ico
+[2026-06-23 23:11:53] [INFO] Cliente desconectado: Zd_XAMmjZMCYCrmyAAAB
+[2026-06-23 23:11:53] [INFO] Cliente conectado via WebSocket: 90cCN9MxC3YyRbHvAAAD
+[2026-06-23 23:12:14] [INFO] Cliente desconectado: 90cCN9MxC3YyRbHvAAAD
+[2026-06-23 23:12:14] [INFO] Cliente conectado via WebSocket: sS8ezneiaV_S8_HhAAAF
+[2026-06-23 23:12:40] [INFO] Cliente desconectado: sS8ezneiaV_S8_HhAAAF
+[2026-06-23 23:12:41] [INFO] Cliente conectado via WebSocket: _0SnySb8HjlLeDnqAAAH
+[2026-06-23 23:13:24] [INFO] Cliente desconectado: _0SnySb8HjlLeDnqAAAH
+[2026-06-23 23:13:40] [INFO] Cliente conectado via WebSocket: dD4271klgaGZcbjtAAAJ
+[2026-06-23 23:16:16] [INFO] Cliente desconectado: dD4271klgaGZcbjtAAAJ
+[2026-06-23 23:16:16] [INFO] Cliente conectado via WebSocket: vO4oMb5KD_XvlMJnAAAL
+[2026-06-23 23:19:46] [INFO] Cliente desconectado: vO4oMb5KD_XvlMJnAAAL
+[2026-06-23 23:29:27] [INFO] Cliente conectado via WebSocket: _ZU0UZyqfnzljjI3AAAN
+[2026-06-23 23:29:42] [INFO] Cliente desconectado: _ZU0UZyqfnzljjI3AAAN
+[2026-06-23 23:39:22] [INFO] SERVIDOR ACTIVO -> Puerto: 3000
+[2026-06-23 23:39:23] [INFO] BASE DE DATOS -> juego_40
+[2026-06-23 23:39:23] [INFO] [UDP Monitor] Monitor iniciado
+[2026-06-23 23:39:23] [INFO] [UDP Monitor] Servidor UDP activo en 127.0.0.1:54322
+[2026-06-23 23:39:23] [INFO] [DB] Conexion a MySQL exitosa.
+[2026-06-23 23:39:37] [INFO] Cliente conectado via WebSocket: qVbzlnjsxyRUItXZAAAB
+[2026-06-23 23:41:04] [INFO] [RECUPERACION] Token temporal generado para usuario 20aa2e16-126e-4772-8dfc-d707f4a03223
+[2026-06-23 23:48:32] [INFO] SERVIDOR ACTIVO -> Puerto: 3000
+[2026-06-23 23:48:32] [INFO] BASE DE DATOS -> juego_40
+[2026-06-23 23:48:32] [INFO] [UDP Monitor] Monitor iniciado
+[2026-06-23 23:48:32] [INFO] [UDP Monitor] Servidor UDP activo en 127.0.0.1:54322
+[2026-06-23 23:48:32] [INFO] [DB] Conexion a MySQL exitosa.
+[2026-06-23 23:48:32] [INFO] Cliente conectado via WebSocket: 9KIfGwp6AfA57r0BAAAB
+[2026-06-23 23:48:40] [INFO] Cliente desconectado: 9KIfGwp6AfA57r0BAAAB
+[2026-06-23 23:48:40] [INFO] Cliente conectado via WebSocket: EpYdjyMCCUWgZEOGAAAD
+[2026-06-23 23:49:06] [INFO] [RECUPERACION] Token temporal generado para usuario 20aa2e16-126e-4772-8dfc-d707f4a03223
+[2026-06-23 23:49:15] [INFO] [RECUPERACION] Contrasena restablecida para usuario 20aa2e16-126e-4772-8dfc-d707f4a03223
+[2026-06-23 23:49:28] [INFO] Cliente desconectado: EpYdjyMCCUWgZEOGAAAD
+[2026-06-23 23:49:28] [INFO] Cliente conectado via WebSocket: yN5NswwWXrpCn9csAAAF
+[2026-06-23 23:49:31] [INFO] Cliente desconectado: yN5NswwWXrpCn9csAAAF
+[2026-06-23 23:49:31] [INFO] Cliente conectado via WebSocket: qKcTV2xCEOgc6ZA1AAAH
+[2026-06-23 23:49:38] [INFO] Cliente desconectado: qKcTV2xCEOgc6ZA1AAAH
+[2026-06-23 23:49:44] [INFO] Cliente conectado via WebSocket: TWyc_B8J7HLwev5dAAAJ
+[2026-06-23 23:49:49] [INFO] Cliente desconectado: TWyc_B8J7HLwev5dAAAJ
+[2026-06-23 23:49:49] [INFO] Cliente conectado via WebSocket: zILEP7Mxs55LpuxbAAAL
+[2026-06-23 23:51:46] [INFO] Cliente desconectado: zILEP7Mxs55LpuxbAAAL
+[2026-06-23 23:51:51] [INFO] Cliente conectado via WebSocket: ZsntiQXtc7YNKicfAAAN
+[2026-06-23 23:51:56] [INFO] Cliente desconectado: ZsntiQXtc7YNKicfAAAN
+[2026-06-23 23:51:56] [INFO] Cliente conectado via WebSocket: 8J4aVxxjaQiBqPiTAAAP
+[2026-06-23 23:52:03] [INFO] [RECUPERACION] Token temporal generado para usuario bd3dbd64-2464-40b6-b96c-bc0cbb30baaf
+[2026-06-23 23:52:07] [INFO] [RECUPERACION] Contrasena restablecida para usuario bd3dbd64-2464-40b6-b96c-bc0cbb30baaf
+[2026-06-23 23:52:13] [INFO] Cliente desconectado: 8J4aVxxjaQiBqPiTAAAP
+[2026-06-23 23:52:14] [INFO] Cliente conectado via WebSocket: dk6w6N8sSglbSAc7AAAR
+[2026-06-23 23:52:16] [INFO] Cliente desconectado: dk6w6N8sSglbSAc7AAAR
+[2026-06-23 23:52:16] [INFO] Cliente conectado via WebSocket: naQFijt0OFI-xFY7AAAT
+[2026-06-23 23:54:30] [INFO] Cliente desconectado: naQFijt0OFI-xFY7AAAT
+[2026-06-23 23:54:30] [INFO] Cliente conectado via WebSocket: dCqwV1E4PUk2FhzmAAAV
+[2026-06-23 23:56:55] [INFO] Cliente conectado via WebSocket: hlzoyCzd3koR2a1AAAAX
+[2026-06-23 23:56:55] [INFO] Cliente conectado via WebSocket: KNRzHnN3cn4RiZJ3AAAZ
+[2026-06-23 23:56:56] [INFO] Cliente desconectado: KNRzHnN3cn4RiZJ3AAAZ
+[2026-06-23 23:56:58] [INFO] Cliente desconectado: dCqwV1E4PUk2FhzmAAAV
+[2026-06-23 23:56:58] [WARN] [DESCONEXION] Usuario 20aa2e16-126e-4772-8dfc-d707f4a03223 desconectado de sesion 022939bc-3ebc-4548-8d96-f34b5366373f
+[2026-06-23 23:56:58] [INFO] Cliente conectado via WebSocket: LxdNDJZqT8kwYYLfAAAb
+[2026-06-23 23:57:03] [INFO] Cliente desconectado: LxdNDJZqT8kwYYLfAAAb

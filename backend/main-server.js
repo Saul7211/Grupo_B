@@ -6,6 +6,8 @@ import http from 'http';
 import { Server } from 'socket.io';
 import {
     pool,
+    actualizarContrasenaUsuario,
+    buscarUsuarioParaRecuperacion,
     registrarUsuario,
     loginUsuario,
     recargarSaldo,
@@ -20,7 +22,13 @@ import logger from './logger/index.js';
 import morganMiddleware from './logger/morganMiddleware.js';
 import usersRoutes from './routes/users.js';
 import logsRoutes from './routes/logs.js';
-import { authenticateSocketPayload, authMiddleware, createAuthToken } from './middleware/authMiddleware.js';
+import {
+    authenticateSocketPayload,
+    authMiddleware,
+    createAuthToken,
+    createRecoveryToken,
+    verifyRecoveryToken
+} from './middleware/authMiddleware.js';
 
 const app = express();
 app.use(express.json());
@@ -250,6 +258,45 @@ io.on('connection', (socket) => {
             }
 
             socket.emit('login_exitoso', resultado);
+        } catch (err) {
+            socket.emit('error_notificacion', err.message);
+        }
+    });
+
+    // 2.1 RECUPERACION DE CONTRASENA CON TOKEN TEMPORAL
+
+    socket.on('solicitar_recuperacion', async ({ username }) => {
+        try {
+            if (!username) throw new Error('El usuario es obligatorio.');
+
+            const user = await buscarUsuarioParaRecuperacion(username);
+            const token = createRecoveryToken(user);
+
+            logger.info(`[RECUPERACION] Token temporal generado para usuario ${user.userId}`);
+
+            socket.emit('recuperacion_token_generado', {
+                msg: 'Token temporal generado. Usalo para restablecer tu contrasena.',
+                token,
+                expiresIn: process.env.RECOVERY_TOKEN_EXPIRES_IN || '15m'
+            });
+        } catch (err) {
+            socket.emit('error_notificacion', err.message);
+        }
+    });
+
+    socket.on('restablecer_contrasena', async ({ token, nuevaPassword }) => {
+        try {
+            if (!token || !nuevaPassword) {
+                throw new Error('Token y nueva contrasena son obligatorios.');
+            }
+
+            const decoded = verifyRecoveryToken(token);
+            await actualizarContrasenaUsuario(decoded.userId, nuevaPassword);
+
+            logger.info(`[RECUPERACION] Contrasena restablecida para usuario ${decoded.userId}`);
+            socket.emit('contrasena_restablecida', {
+                msg: 'Contrasena actualizada correctamente. Ya puedes iniciar sesion.'
+            });
         } catch (err) {
             socket.emit('error_notificacion', err.message);
         }
