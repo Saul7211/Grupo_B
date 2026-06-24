@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "C:\\Users\\JENN\\Desktop\\ESPE\\7MO\\A. Distribuida\\Segundo Parcial\\ProyectoP2\\Grupo_B\\backend\\logs\\.2e15baf74dbf860747bd6f9d8fc8af9b40cbd3da-audit.json",
+    "files": [
+        {
+            "date": 1782331968453,
+            "name": "C:\\Users\\JENN\\Desktop\\ESPE\\7MO\\A. Distribuida\\Segundo Parcial\\ProyectoP2\\Grupo_B\\backend\\logs\\application-2026-06-24.log",
+            "hash": "d74b24239415aa083f3702f0ec497202559bc203c93bf2fc7ac5afd80ac4dc25"
+        }
+    ],
+    "hashType": "sha256"
+}
