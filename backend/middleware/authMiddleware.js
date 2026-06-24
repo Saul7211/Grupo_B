@@ -19,6 +19,7 @@ export function createAuthToken(user) {
     );
 }
 
+//Verifica que un token JWT sea válido.
 export function verifyAuthToken(token) {
     if (!token) {
         throw new Error('Token de autenticacion requerido.');
